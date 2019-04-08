@@ -61,4 +61,4 @@ typings/
 .next
 
 # dart
-.dart-tool/
+.dart_tool/
