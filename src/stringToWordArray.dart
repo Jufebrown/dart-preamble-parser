@@ -1,0 +1,1 @@
+List<String> stringToWordArray(documentText) => documentText.split(new RegExp(r'(?=[.\s]|\b)'));
