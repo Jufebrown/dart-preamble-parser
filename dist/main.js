@@ -226,11 +226,56 @@
   var C = {},
   H = {JS_CONST: function JS_CONST() {
     },
+    IterableElementError_noElement: function() {
+      return new P.StateError("No element");
+    },
+    IterableElementError_tooMany: function() {
+      return new P.StateError("Too many elements");
+    },
+    EfficientLengthIterable: function EfficientLengthIterable() {
+    },
+    ListIterable: function ListIterable() {
+    },
+    ListIterator: function ListIterator(t0, t1, t2, t3) {
+      var _ = this;
+      _.__internal$_iterable = t0;
+      _.__internal$_length = t1;
+      _.__internal$_index = t2;
+      _.__internal$_current = null;
+      _.$ti = t3;
+    },
+    MappedListIterable: function MappedListIterable(t0, t1, t2) {
+      this._source = t0;
+      this._f = t1;
+      this.$ti = t2;
+    },
+    WhereIterable: function WhereIterable(t0, t1, t2) {
+      this.__internal$_iterable = t0;
+      this._f = t1;
+      this.$ti = t2;
+    },
+    WhereIterator: function WhereIterator(t0, t1, t2) {
+      this._iterator = t0;
+      this._f = t1;
+      this.$ti = t2;
+    },
     unminifyOrTag: function(rawClassName) {
       var preserved = H.stringTypeCheck(init.mangledGlobalNames[rawClassName]);
       if (typeof preserved === "string")
         return preserved;
       return rawClassName;
+    },
+    getType: function(index) {
+      return init.types[H.intTypeCheck(index)];
+    },
+    isJsIndexable: function(object, record) {
+      var result;
+      if (record != null) {
+        result = record.x;
+        if (result != null)
+          return result;
+      }
+      return !!J.getInterceptor$(object).$isJavaScriptIndexingBehavior;
     },
     S: function(value) {
       var res;
@@ -250,11 +295,19 @@
         throw H.wrapException(H.argumentErrorValue(value));
       return res;
     },
+    Primitives_objectHashCode: function(object) {
+      var hash = object.$identityHash;
+      if (hash == null) {
+        hash = Math.random() * 0x3fffffff | 0;
+        object.$identityHash = hash;
+      }
+      return hash;
+    },
     Primitives_objectTypeName: function(object) {
       return H.Primitives__objectClassName(object) + H._joinArguments(H.getRuntimeTypeInfo(object), 0, null);
     },
     Primitives__objectClassName: function(object) {
-      var interceptor, interceptorConstructor, interceptorConstructorName, $name, t1, dispatchName, objectConstructor, match, decompiledName;
+      var interceptor, interceptorConstructor, interceptorConstructorName, $name, t1, dispatchName, objectConstructor, match, decompiledName, endIndex;
       interceptor = J.getInterceptor$(object);
       interceptorConstructor = interceptor.constructor;
       if (typeof interceptorConstructor == "function") {
@@ -263,7 +316,7 @@
       } else
         $name = null;
       t1 = $name == null;
-      if (t1 || interceptor === C.Interceptor_methods || false) {
+      if (t1 || interceptor === C.Interceptor_methods || !!interceptor.$isUnknownJavaScriptObject) {
         dispatchName = C.C_JS_CONST(object);
         if (t1)
           $name = dispatchName;
@@ -279,19 +332,36 @@
         return $name;
       }
       $name = $name;
-      return H.unminifyOrTag($name.length > 1 && C.JSString_methods._codeUnitAt$1($name, 0) === 36 ? C.JSString_methods.substring$1($name, 1) : $name);
+      endIndex = $name.length;
+      if (endIndex > 1 && C.JSString_methods._codeUnitAt$1($name, 0) === 36) {
+        if (1 > endIndex)
+          H.throwExpression(P.RangeError$value(1, null));
+        if (endIndex > endIndex)
+          H.throwExpression(P.RangeError$value(endIndex, null));
+        $name = $name.substring(1, endIndex);
+      }
+      return H.unminifyOrTag($name);
+    },
+    iae: function(argument) {
+      throw H.wrapException(H.argumentErrorValue(argument));
     },
     ioore: function(receiver, index) {
       if (receiver == null)
-        J.get$length$as(receiver);
+        J.get$length$asx(receiver);
       throw H.wrapException(H.diagnoseIndexError(receiver, index));
     },
     diagnoseIndexError: function(indexable, index) {
-      var $length;
+      var $length, t1;
       if (typeof index !== "number" || Math.floor(index) !== index)
         return new P.ArgumentError(true, index, "index", null);
-      $length = J.get$length$as(indexable);
-      if (index < 0 || index >= $length)
+      $length = J.get$length$asx(indexable);
+      if (!(index < 0)) {
+        if (typeof $length !== "number")
+          return H.iae($length);
+        t1 = index >= $length;
+      } else
+        t1 = true;
+      if (t1)
         return P.IndexError$(index, indexable, "index", null, $length);
       return P.RangeError$value(index, "index");
     },
@@ -319,6 +389,402 @@
     },
     throwConcurrentModificationError: function(collection) {
       throw H.wrapException(P.ConcurrentModificationError$(collection));
+    },
+    TypeErrorDecoder_extractPattern: function(message) {
+      var match, $arguments, argumentsExpr, expr, method, receiver;
+      message = message.replace(String({}), '$receiver$').replace(/[[\]{}()*+?.\\^$|]/g, "\\$&");
+      match = message.match(/\\\$[a-zA-Z]+\\\$/g);
+      if (match == null)
+        match = H.setRuntimeTypeInfo([], [P.String]);
+      $arguments = match.indexOf("\\$arguments\\$");
+      argumentsExpr = match.indexOf("\\$argumentsExpr\\$");
+      expr = match.indexOf("\\$expr\\$");
+      method = match.indexOf("\\$method\\$");
+      receiver = match.indexOf("\\$receiver\\$");
+      return new H.TypeErrorDecoder(message.replace(new RegExp('\\\\\\$arguments\\\\\\$', 'g'), '((?:x|[^x])*)').replace(new RegExp('\\\\\\$argumentsExpr\\\\\\$', 'g'), '((?:x|[^x])*)').replace(new RegExp('\\\\\\$expr\\\\\\$', 'g'), '((?:x|[^x])*)').replace(new RegExp('\\\\\\$method\\\\\\$', 'g'), '((?:x|[^x])*)').replace(new RegExp('\\\\\\$receiver\\\\\\$', 'g'), '((?:x|[^x])*)'), $arguments, argumentsExpr, expr, method, receiver);
+    },
+    TypeErrorDecoder_provokeCallErrorOn: function(expression) {
+      return function($expr$) {
+        var $argumentsExpr$ = '$arguments$';
+        try {
+          $expr$.$method$($argumentsExpr$);
+        } catch (e) {
+          return e.message;
+        }
+      }(expression);
+    },
+    TypeErrorDecoder_provokePropertyErrorOn: function(expression) {
+      return function($expr$) {
+        try {
+          $expr$.$method$;
+        } catch (e) {
+          return e.message;
+        }
+      }(expression);
+    },
+    NullError$: function(_message, match) {
+      return new H.NullError(_message, match == null ? null : match.method);
+    },
+    JsNoSuchMethodError$: function(_message, match) {
+      var t1, t2;
+      t1 = match == null;
+      t2 = t1 ? null : match.method;
+      return new H.JsNoSuchMethodError(_message, t2, t1 ? null : match.receiver);
+    },
+    unwrapException: function(ex) {
+      var t1, message, number, ieErrorCode, nsme, notClosure, nullCall, nullLiteralCall, undefCall, undefLiteralCall, nullProperty, undefProperty, undefLiteralProperty, match, t2;
+      t1 = new H.unwrapException_saveStackTrace(ex);
+      if (ex == null)
+        return;
+      if (typeof ex !== "object")
+        return ex;
+      if ("dartException" in ex)
+        return t1.call$1(ex.dartException);
+      else if (!("message" in ex))
+        return ex;
+      message = ex.message;
+      if ("number" in ex && typeof ex.number == "number") {
+        number = ex.number;
+        ieErrorCode = number & 65535;
+        if ((C.JSInt_methods._shrOtherPositive$1(number, 16) & 8191) === 10)
+          switch (ieErrorCode) {
+            case 438:
+              return t1.call$1(H.JsNoSuchMethodError$(H.S(message) + " (Error " + ieErrorCode + ")", null));
+            case 445:
+            case 5007:
+              return t1.call$1(H.NullError$(H.S(message) + " (Error " + ieErrorCode + ")", null));
+          }
+      }
+      if (ex instanceof TypeError) {
+        nsme = $.$get$TypeErrorDecoder_noSuchMethodPattern();
+        notClosure = $.$get$TypeErrorDecoder_notClosurePattern();
+        nullCall = $.$get$TypeErrorDecoder_nullCallPattern();
+        nullLiteralCall = $.$get$TypeErrorDecoder_nullLiteralCallPattern();
+        undefCall = $.$get$TypeErrorDecoder_undefinedCallPattern();
+        undefLiteralCall = $.$get$TypeErrorDecoder_undefinedLiteralCallPattern();
+        nullProperty = $.$get$TypeErrorDecoder_nullPropertyPattern();
+        $.$get$TypeErrorDecoder_nullLiteralPropertyPattern();
+        undefProperty = $.$get$TypeErrorDecoder_undefinedPropertyPattern();
+        undefLiteralProperty = $.$get$TypeErrorDecoder_undefinedLiteralPropertyPattern();
+        match = nsme.matchTypeError$1(message);
+        if (match != null)
+          return t1.call$1(H.JsNoSuchMethodError$(H.stringTypeCheck(message), match));
+        else {
+          match = notClosure.matchTypeError$1(message);
+          if (match != null) {
+            match.method = "call";
+            return t1.call$1(H.JsNoSuchMethodError$(H.stringTypeCheck(message), match));
+          } else {
+            match = nullCall.matchTypeError$1(message);
+            if (match == null) {
+              match = nullLiteralCall.matchTypeError$1(message);
+              if (match == null) {
+                match = undefCall.matchTypeError$1(message);
+                if (match == null) {
+                  match = undefLiteralCall.matchTypeError$1(message);
+                  if (match == null) {
+                    match = nullProperty.matchTypeError$1(message);
+                    if (match == null) {
+                      match = nullLiteralCall.matchTypeError$1(message);
+                      if (match == null) {
+                        match = undefProperty.matchTypeError$1(message);
+                        if (match == null) {
+                          match = undefLiteralProperty.matchTypeError$1(message);
+                          t2 = match != null;
+                        } else
+                          t2 = true;
+                      } else
+                        t2 = true;
+                    } else
+                      t2 = true;
+                  } else
+                    t2 = true;
+                } else
+                  t2 = true;
+              } else
+                t2 = true;
+            } else
+              t2 = true;
+            if (t2)
+              return t1.call$1(H.NullError$(H.stringTypeCheck(message), match));
+          }
+        }
+        return t1.call$1(new H.UnknownJsTypeError(typeof message === "string" ? message : ""));
+      }
+      if (ex instanceof RangeError) {
+        if (typeof message === "string" && message.indexOf("call stack") !== -1)
+          return new P.StackOverflowError();
+        message = function(ex) {
+          try {
+            return String(ex);
+          } catch (e) {
+          }
+          return null;
+        }(ex);
+        return t1.call$1(new P.ArgumentError(false, null, null, typeof message === "string" ? message.replace(/^RangeError:\s*/, "") : message));
+      }
+      if (typeof InternalError == "function" && ex instanceof InternalError)
+        if (typeof message === "string" && message === "too much recursion")
+          return new P.StackOverflowError();
+      return ex;
+    },
+    Closure_fromTearOff: function(receiver, functions, applyTrampolineIndex, reflectionInfo, isStatic, isIntercepted, propertyName) {
+      var $function, callName, $prototype, $constructor, t1, trampoline, signatureFunction, getReceiver, applyTrampoline, i, stub, stubCallName;
+      $function = functions[0];
+      callName = $function.$callName;
+      $prototype = isStatic ? Object.create(new H.StaticClosure().constructor.prototype) : Object.create(new H.BoundClosure(null, null, null, null).constructor.prototype);
+      $prototype.$initialize = $prototype.constructor;
+      if (isStatic)
+        $constructor = function static_tear_off() {
+          this.$initialize();
+        };
+      else {
+        t1 = $.Closure_functionCounter;
+        if (typeof t1 !== "number")
+          return t1.$add();
+        $.Closure_functionCounter = t1 + 1;
+        t1 = new Function("a,b,c,d" + t1, "this.$initialize(a,b,c,d" + t1 + ")");
+        $constructor = t1;
+      }
+      $prototype.constructor = $constructor;
+      $constructor.prototype = $prototype;
+      if (!isStatic) {
+        trampoline = H.Closure_forwardCallTo(receiver, $function, isIntercepted);
+        trampoline.$reflectionInfo = reflectionInfo;
+      } else {
+        $prototype.$static_name = propertyName;
+        trampoline = $function;
+      }
+      if (typeof reflectionInfo == "number")
+        signatureFunction = function(getType, t) {
+          return function() {
+            return getType(t);
+          };
+        }(H.getType, reflectionInfo);
+      else if (typeof reflectionInfo == "function")
+        if (isStatic)
+          signatureFunction = reflectionInfo;
+        else {
+          getReceiver = isIntercepted ? H.BoundClosure_receiverOf : H.BoundClosure_selfOf;
+          signatureFunction = function(f, r) {
+            return function() {
+              return f.apply({$receiver: r(this)}, arguments);
+            };
+          }(reflectionInfo, getReceiver);
+        }
+      else
+        throw H.wrapException("Error in reflectionInfo.");
+      $prototype.$signature = signatureFunction;
+      $prototype[callName] = trampoline;
+      for (applyTrampoline = trampoline, i = 1; i < functions.length; ++i) {
+        stub = functions[i];
+        stubCallName = stub.$callName;
+        if (stubCallName != null) {
+          stub = isStatic ? stub : H.Closure_forwardCallTo(receiver, stub, isIntercepted);
+          $prototype[stubCallName] = stub;
+        }
+        if (i === applyTrampolineIndex) {
+          stub.$reflectionInfo = reflectionInfo;
+          applyTrampoline = stub;
+        }
+      }
+      $prototype["call*"] = applyTrampoline;
+      $prototype.$requiredArgCount = $function.$requiredArgCount;
+      $prototype.$defaultValues = $function.$defaultValues;
+      return $constructor;
+    },
+    Closure_cspForwardCall: function(arity, isSuperCall, stubName, $function) {
+      var getSelf = H.BoundClosure_selfOf;
+      switch (isSuperCall ? -1 : arity) {
+        case 0:
+          return function(n, S) {
+            return function() {
+              return S(this)[n]();
+            };
+          }(stubName, getSelf);
+        case 1:
+          return function(n, S) {
+            return function(a) {
+              return S(this)[n](a);
+            };
+          }(stubName, getSelf);
+        case 2:
+          return function(n, S) {
+            return function(a, b) {
+              return S(this)[n](a, b);
+            };
+          }(stubName, getSelf);
+        case 3:
+          return function(n, S) {
+            return function(a, b, c) {
+              return S(this)[n](a, b, c);
+            };
+          }(stubName, getSelf);
+        case 4:
+          return function(n, S) {
+            return function(a, b, c, d) {
+              return S(this)[n](a, b, c, d);
+            };
+          }(stubName, getSelf);
+        case 5:
+          return function(n, S) {
+            return function(a, b, c, d, e) {
+              return S(this)[n](a, b, c, d, e);
+            };
+          }(stubName, getSelf);
+        default:
+          return function(f, s) {
+            return function() {
+              return f.apply(s(this), arguments);
+            };
+          }($function, getSelf);
+      }
+    },
+    Closure_forwardCallTo: function(receiver, $function, isIntercepted) {
+      var stubName, arity, lookedUpFunction, t1, t2, selfName, $arguments;
+      if (isIntercepted)
+        return H.Closure_forwardInterceptedCallTo(receiver, $function);
+      stubName = $function.$stubName;
+      arity = $function.length;
+      lookedUpFunction = receiver[stubName];
+      t1 = $function == null ? lookedUpFunction == null : $function === lookedUpFunction;
+      t2 = !t1 || arity >= 27;
+      if (t2)
+        return H.Closure_cspForwardCall(arity, !t1, stubName, $function);
+      if (arity === 0) {
+        t1 = $.Closure_functionCounter;
+        if (typeof t1 !== "number")
+          return t1.$add();
+        $.Closure_functionCounter = t1 + 1;
+        selfName = "self" + t1;
+        t1 = "return function(){var " + selfName + " = this.";
+        t2 = $.BoundClosure_selfFieldNameCache;
+        if (t2 == null) {
+          t2 = H.BoundClosure_computeFieldNamed("self");
+          $.BoundClosure_selfFieldNameCache = t2;
+        }
+        return new Function(t1 + H.S(t2) + ";return " + selfName + "." + H.S(stubName) + "();}")();
+      }
+      $arguments = "abcdefghijklmnopqrstuvwxyz".split("").splice(0, arity).join(",");
+      t1 = $.Closure_functionCounter;
+      if (typeof t1 !== "number")
+        return t1.$add();
+      $.Closure_functionCounter = t1 + 1;
+      $arguments += t1;
+      t1 = "return function(" + $arguments + "){return this.";
+      t2 = $.BoundClosure_selfFieldNameCache;
+      if (t2 == null) {
+        t2 = H.BoundClosure_computeFieldNamed("self");
+        $.BoundClosure_selfFieldNameCache = t2;
+      }
+      return new Function(t1 + H.S(t2) + "." + H.S(stubName) + "(" + $arguments + ");}")();
+    },
+    Closure_cspForwardInterceptedCall: function(arity, isSuperCall, $name, $function) {
+      var getSelf, getReceiver;
+      getSelf = H.BoundClosure_selfOf;
+      getReceiver = H.BoundClosure_receiverOf;
+      switch (isSuperCall ? -1 : arity) {
+        case 0:
+          throw H.wrapException(new H.RuntimeError("Intercepted function with no arguments."));
+        case 1:
+          return function(n, s, r) {
+            return function() {
+              return s(this)[n](r(this));
+            };
+          }($name, getSelf, getReceiver);
+        case 2:
+          return function(n, s, r) {
+            return function(a) {
+              return s(this)[n](r(this), a);
+            };
+          }($name, getSelf, getReceiver);
+        case 3:
+          return function(n, s, r) {
+            return function(a, b) {
+              return s(this)[n](r(this), a, b);
+            };
+          }($name, getSelf, getReceiver);
+        case 4:
+          return function(n, s, r) {
+            return function(a, b, c) {
+              return s(this)[n](r(this), a, b, c);
+            };
+          }($name, getSelf, getReceiver);
+        case 5:
+          return function(n, s, r) {
+            return function(a, b, c, d) {
+              return s(this)[n](r(this), a, b, c, d);
+            };
+          }($name, getSelf, getReceiver);
+        case 6:
+          return function(n, s, r) {
+            return function(a, b, c, d, e) {
+              return s(this)[n](r(this), a, b, c, d, e);
+            };
+          }($name, getSelf, getReceiver);
+        default:
+          return function(f, s, r, a) {
+            return function() {
+              a = [r(this)];
+              Array.prototype.push.apply(a, arguments);
+              return f.apply(s(this), a);
+            };
+          }($function, getSelf, getReceiver);
+      }
+    },
+    Closure_forwardInterceptedCallTo: function(receiver, $function) {
+      var t1, t2, stubName, arity, lookedUpFunction, t3, t4, $arguments;
+      t1 = $.BoundClosure_selfFieldNameCache;
+      if (t1 == null) {
+        t1 = H.BoundClosure_computeFieldNamed("self");
+        $.BoundClosure_selfFieldNameCache = t1;
+      }
+      t2 = $.BoundClosure_receiverFieldNameCache;
+      if (t2 == null) {
+        t2 = H.BoundClosure_computeFieldNamed("receiver");
+        $.BoundClosure_receiverFieldNameCache = t2;
+      }
+      stubName = $function.$stubName;
+      arity = $function.length;
+      lookedUpFunction = receiver[stubName];
+      t3 = $function == null ? lookedUpFunction == null : $function === lookedUpFunction;
+      t4 = !t3 || arity >= 28;
+      if (t4)
+        return H.Closure_cspForwardInterceptedCall(arity, !t3, stubName, $function);
+      if (arity === 1) {
+        t1 = "return function(){return this." + H.S(t1) + "." + H.S(stubName) + "(this." + H.S(t2) + ");";
+        t2 = $.Closure_functionCounter;
+        if (typeof t2 !== "number")
+          return t2.$add();
+        $.Closure_functionCounter = t2 + 1;
+        return new Function(t1 + t2 + "}")();
+      }
+      $arguments = "abcdefghijklmnopqrstuvwxyz".split("").splice(0, arity - 1).join(",");
+      t1 = "return function(" + $arguments + "){return this." + H.S(t1) + "." + H.S(stubName) + "(this." + H.S(t2) + ", " + $arguments + ");";
+      t2 = $.Closure_functionCounter;
+      if (typeof t2 !== "number")
+        return t2.$add();
+      $.Closure_functionCounter = t2 + 1;
+      return new Function(t1 + t2 + "}")();
+    },
+    closureFromTearOff: function(receiver, functions, applyTrampolineIndex, reflectionInfo, isStatic, isIntercepted, $name) {
+      return H.Closure_fromTearOff(receiver, functions, H.intTypeCheck(applyTrampolineIndex), reflectionInfo, !!isStatic, !!isIntercepted, $name);
+    },
+    BoundClosure_selfOf: function(closure) {
+      return closure._self;
+    },
+    BoundClosure_receiverOf: function(closure) {
+      return closure._receiver;
+    },
+    BoundClosure_computeFieldNamed: function(fieldName) {
+      var template, names, t1, i, $name;
+      template = new H.BoundClosure("self", "target", "receiver", "name");
+      names = J.JSArray_markFixedList(Object.getOwnPropertyNames(template));
+      for (t1 = names.length, i = 0; i < t1; ++i) {
+        $name = names[i];
+        if (template[$name] === fieldName)
+          return $name;
+      }
     },
     stringTypeCheck: function(value) {
       if (value == null)
@@ -358,21 +824,23 @@
         return value;
       H.propertyTypeError(value, property);
     },
-    stringSuperNativeTypeCheck: function(value, property) {
-      if (value == null)
-        return value;
-      if (typeof value === "string")
-        return value;
-      if (J.getInterceptor$(value)[property])
-        return value;
-      H.propertyTypeError(value, property);
-    },
     listTypeCheck: function(value) {
       if (value == null)
         return value;
       if (!!J.getInterceptor$(value).$isList)
         return value;
       throw H.wrapException(H.TypeErrorImplementation$(value, "List<dynamic>"));
+    },
+    listSuperNativeTypeCheck: function(value, property) {
+      var t1;
+      if (value == null)
+        return value;
+      t1 = J.getInterceptor$(value);
+      if (!!t1.$isList)
+        return value;
+      if (t1[property])
+        return value;
+      H.propertyTypeError(value, property);
     },
     extractFunctionTypeObjectFromInternal: function(o) {
       var signature;
@@ -396,6 +864,23 @@
         return false;
       return H._isFunctionSubtype(functionTypeObject, null, functionTypeRti, null);
     },
+    functionTypeCheck: function(value, functionTypeRti) {
+      var $self, t1;
+      if (value == null)
+        return value;
+      if ($._inTypeAssertion)
+        return value;
+      $._inTypeAssertion = true;
+      try {
+        if (H.functionTypeTest(value, functionTypeRti))
+          return value;
+        $self = H.runtimeTypeToString(functionTypeRti);
+        t1 = H.TypeErrorImplementation$(value, $self);
+        throw H.wrapException(t1);
+      } finally {
+        $._inTypeAssertion = false;
+      }
+    },
     TypeErrorImplementation$: function(value, type) {
       return new H.TypeErrorImplementation("TypeError: " + P.Error_safeToString(value) + ": type '" + H._typeDescription(value) + "' is not a subtype of type '" + type + "'");
     },
@@ -413,6 +898,9 @@
     throwCyclicInit: function(staticName) {
       throw H.wrapException(new P.CyclicInitializationError(H.stringTypeCheck(staticName)));
     },
+    getIsolateAffinityTag: function($name) {
+      return init.getIsolateTag($name);
+    },
     setRuntimeTypeInfo: function(target, rti) {
       target.$ti = rti;
       return target;
@@ -421,6 +909,23 @@
       if (target == null)
         return;
       return target.$ti;
+    },
+    getRuntimeTypeArguments: function(interceptor, object, substitutionName) {
+      return H.substitute(interceptor["$as" + H.S(substitutionName)], H.getRuntimeTypeInfo(object));
+    },
+    getRuntimeTypeArgumentIntercepted: function(interceptor, target, substitutionName, index) {
+      var $arguments;
+      H.stringTypeCheck(substitutionName);
+      H.intTypeCheck(index);
+      $arguments = H.substitute(interceptor["$as" + H.S(substitutionName)], H.getRuntimeTypeInfo(target));
+      return $arguments == null ? null : $arguments[index];
+    },
+    getRuntimeTypeArgument: function(target, substitutionName, index) {
+      var $arguments;
+      H.stringTypeCheck(substitutionName);
+      H.intTypeCheck(index);
+      $arguments = H.substitute(target["$as" + H.S(substitutionName)], H.getRuntimeTypeInfo(target));
+      return $arguments == null ? null : $arguments[index];
     },
     getTypeArgumentByIndex: function(target, index) {
       var rti;
@@ -594,6 +1099,9 @@
           return false;
       return true;
     },
+    computeSignature: function(signature, context, contextName) {
+      return signature.apply(context, H.substitute(J.getInterceptor$(context)["$as" + H.S(contextName)], H.getRuntimeTypeInfo(context)));
+    },
     isSupertypeOfNullRecursive: function(type) {
       var typeArgument;
       if (typeof type === "number")
@@ -743,65 +1251,270 @@
       }
       return true;
     },
-    JSSyntaxRegExp_makeNative: function(source, multiLine, caseSensitive, global) {
-      var m, i, g, regexp;
-      m = multiLine ? "m" : "";
-      i = caseSensitive ? "" : "i";
-      g = global ? "g" : "";
-      regexp = function(source, modifiers) {
-        try {
-          return new RegExp(source, modifiers);
-        } catch (e) {
-          return e;
+    defineProperty: function(obj, property, value) {
+      Object.defineProperty(obj, H.stringTypeCheck(property), {value: value, enumerable: false, writable: true, configurable: true});
+    },
+    lookupAndCacheInterceptor: function(obj) {
+      var tag, record, interceptor, interceptorClass, mark, t1;
+      tag = H.stringTypeCheck($.getTagFunction.call$1(obj));
+      record = $.dispatchRecordsForInstanceTags[tag];
+      if (record != null) {
+        Object.defineProperty(obj, init.dispatchPropertyName, {value: record, enumerable: false, writable: true, configurable: true});
+        return record.i;
+      }
+      interceptor = $.interceptorsForUncacheableTags[tag];
+      if (interceptor != null)
+        return interceptor;
+      interceptorClass = init.interceptorsByTag[tag];
+      if (interceptorClass == null) {
+        tag = H.stringTypeCheck($.alternateTagFunction.call$2(obj, tag));
+        if (tag != null) {
+          record = $.dispatchRecordsForInstanceTags[tag];
+          if (record != null) {
+            Object.defineProperty(obj, init.dispatchPropertyName, {value: record, enumerable: false, writable: true, configurable: true});
+            return record.i;
+          }
+          interceptor = $.interceptorsForUncacheableTags[tag];
+          if (interceptor != null)
+            return interceptor;
+          interceptorClass = init.interceptorsByTag[tag];
         }
-      }(source, m + i + g);
-      if (regexp instanceof RegExp)
-        return regexp;
-      throw H.wrapException(new P.FormatException("Illegal RegExp pattern (" + String(regexp) + ")", source, null));
+      }
+      if (interceptorClass == null)
+        return;
+      interceptor = interceptorClass.prototype;
+      mark = tag[0];
+      if (mark === "!") {
+        record = H.makeLeafDispatchRecord(interceptor);
+        $.dispatchRecordsForInstanceTags[tag] = record;
+        Object.defineProperty(obj, init.dispatchPropertyName, {value: record, enumerable: false, writable: true, configurable: true});
+        return record.i;
+      }
+      if (mark === "~") {
+        $.interceptorsForUncacheableTags[tag] = interceptor;
+        return interceptor;
+      }
+      if (mark === "-") {
+        t1 = H.makeLeafDispatchRecord(interceptor);
+        Object.defineProperty(Object.getPrototypeOf(obj), init.dispatchPropertyName, {value: t1, enumerable: false, writable: true, configurable: true});
+        return t1.i;
+      }
+      if (mark === "+")
+        return H.patchInteriorProto(obj, interceptor);
+      if (mark === "*")
+        throw H.wrapException(P.UnimplementedError$(tag));
+      if (init.leafTags[tag] === true) {
+        t1 = H.makeLeafDispatchRecord(interceptor);
+        Object.defineProperty(Object.getPrototypeOf(obj), init.dispatchPropertyName, {value: t1, enumerable: false, writable: true, configurable: true});
+        return t1.i;
+      } else
+        return H.patchInteriorProto(obj, interceptor);
+    },
+    patchInteriorProto: function(obj, interceptor) {
+      var proto = Object.getPrototypeOf(obj);
+      Object.defineProperty(proto, init.dispatchPropertyName, {value: J.makeDispatchRecord(interceptor, proto, null, null), enumerable: false, writable: true, configurable: true});
+      return interceptor;
+    },
+    makeLeafDispatchRecord: function(interceptor) {
+      return J.makeDispatchRecord(interceptor, false, null, !!interceptor.$isJavaScriptIndexingBehavior);
+    },
+    makeDefaultDispatchRecord: function(tag, interceptorClass, proto) {
+      var interceptor = interceptorClass.prototype;
+      if (init.leafTags[tag] === true)
+        return H.makeLeafDispatchRecord(interceptor);
+      else
+        return J.makeDispatchRecord(interceptor, proto, null, null);
+    },
+    initNativeDispatch: function() {
+      if (true === $.initNativeDispatchFlag)
+        return;
+      $.initNativeDispatchFlag = true;
+      H.initNativeDispatchContinue();
+    },
+    initNativeDispatchContinue: function() {
+      var map, tags, fun, i, tag, proto, record, interceptorClass;
+      $.dispatchRecordsForInstanceTags = Object.create(null);
+      $.interceptorsForUncacheableTags = Object.create(null);
+      H.initHooks();
+      map = init.interceptorsByTag;
+      tags = Object.getOwnPropertyNames(map);
+      if (typeof window != "undefined") {
+        window;
+        fun = function() {
+        };
+        for (i = 0; i < tags.length; ++i) {
+          tag = tags[i];
+          proto = $.prototypeForTagFunction.call$1(tag);
+          if (proto != null) {
+            record = H.makeDefaultDispatchRecord(tag, map[tag], proto);
+            if (record != null) {
+              Object.defineProperty(proto, init.dispatchPropertyName, {value: record, enumerable: false, writable: true, configurable: true});
+              fun.prototype = proto;
+            }
+          }
+        }
+      }
+      for (i = 0; i < tags.length; ++i) {
+        tag = tags[i];
+        if (/^[A-Za-z_]/.test(tag)) {
+          interceptorClass = map[tag];
+          map["!" + tag] = interceptorClass;
+          map["~" + tag] = interceptorClass;
+          map["-" + tag] = interceptorClass;
+          map["+" + tag] = interceptorClass;
+          map["*" + tag] = interceptorClass;
+        }
+      }
+    },
+    initHooks: function() {
+      var hooks, transformers, i, transformer, getTag, getUnknownTag, prototypeForTag;
+      hooks = C.C_JS_CONST0();
+      hooks = H.applyHooksTransformer(C.C_JS_CONST1, H.applyHooksTransformer(C.C_JS_CONST2, H.applyHooksTransformer(C.C_JS_CONST3, H.applyHooksTransformer(C.C_JS_CONST3, H.applyHooksTransformer(C.C_JS_CONST4, H.applyHooksTransformer(C.C_JS_CONST5, H.applyHooksTransformer(C.C_JS_CONST6(C.C_JS_CONST), hooks)))))));
+      if (typeof dartNativeDispatchHooksTransformer != "undefined") {
+        transformers = dartNativeDispatchHooksTransformer;
+        if (typeof transformers == "function")
+          transformers = [transformers];
+        if (transformers.constructor == Array)
+          for (i = 0; i < transformers.length; ++i) {
+            transformer = transformers[i];
+            if (typeof transformer == "function")
+              hooks = transformer(hooks) || hooks;
+          }
+      }
+      getTag = hooks.getTag;
+      getUnknownTag = hooks.getUnknownTag;
+      prototypeForTag = hooks.prototypeForTag;
+      $.getTagFunction = new H.initHooks_closure(getTag);
+      $.alternateTagFunction = new H.initHooks_closure0(getUnknownTag);
+      $.prototypeForTagFunction = new H.initHooks_closure1(prototypeForTag);
+    },
+    applyHooksTransformer: function(transformer, hooks) {
+      return transformer(hooks) || hooks;
+    },
+    TypeErrorDecoder: function TypeErrorDecoder(t0, t1, t2, t3, t4, t5) {
+      var _ = this;
+      _._pattern = t0;
+      _._arguments = t1;
+      _._argumentsExpr = t2;
+      _._expr = t3;
+      _._method = t4;
+      _._receiver = t5;
+    },
+    NullError: function NullError(t0, t1) {
+      this._message = t0;
+      this._method = t1;
+    },
+    JsNoSuchMethodError: function JsNoSuchMethodError(t0, t1, t2) {
+      this._message = t0;
+      this._method = t1;
+      this._receiver = t2;
+    },
+    UnknownJsTypeError: function UnknownJsTypeError(t0) {
+      this._message = t0;
+    },
+    unwrapException_saveStackTrace: function unwrapException_saveStackTrace(t0) {
+      this.ex = t0;
     },
     Closure: function Closure() {
+    },
+    TearOffClosure: function TearOffClosure() {
+    },
+    StaticClosure: function StaticClosure() {
+    },
+    BoundClosure: function BoundClosure(t0, t1, t2, t3) {
+      var _ = this;
+      _._self = t0;
+      _._target = t1;
+      _._receiver = t2;
+      _._name = t3;
     },
     TypeErrorImplementation: function TypeErrorImplementation(t0) {
       this.message = t0;
     },
-    JSSyntaxRegExp: function JSSyntaxRegExp(t0, t1) {
-      var _ = this;
-      _.pattern = t0;
-      _._nativeRegExp = t1;
-      _._nativeAnchoredRegExp = _._nativeGlobalRegExp = null;
+    RuntimeError: function RuntimeError(t0) {
+      this.message = t0;
     },
-    _MatchImplementation: function _MatchImplementation(t0) {
-      this._match = t0;
-    },
-    _AllMatchesIterator: function _AllMatchesIterator(t0, t1, t2) {
+    JsLinkedHashMap: function JsLinkedHashMap(t0) {
       var _ = this;
-      _._regExp = t0;
-      _._string = t1;
-      _._nextIndex = t2;
-      _._current = null;
+      _.__js_helper$_length = 0;
+      _.__js_helper$_last = _.__js_helper$_first = _.__js_helper$_rest = _.__js_helper$_nums = _.__js_helper$_strings = null;
+      _.__js_helper$_modifications = 0;
+      _.$ti = t0;
+    },
+    LinkedHashMapCell: function LinkedHashMapCell(t0, t1) {
+      var _ = this;
+      _.hashMapCellKey = t0;
+      _.hashMapCellValue = t1;
+      _._previous = _.__js_helper$_next = null;
+    },
+    LinkedHashMapKeyIterable: function LinkedHashMapKeyIterable(t0, t1) {
+      this._map = t0;
+      this.$ti = t1;
+    },
+    LinkedHashMapKeyIterator: function LinkedHashMapKeyIterator(t0, t1, t2) {
+      var _ = this;
+      _._map = t0;
+      _.__js_helper$_modifications = t1;
+      _.__js_helper$_current = _.__js_helper$_cell = null;
+      _.$ti = t2;
+    },
+    initHooks_closure: function initHooks_closure(t0) {
+      this.getTag = t0;
+    },
+    initHooks_closure0: function initHooks_closure0(t0) {
+      this.getUnknownTag = t0;
+    },
+    initHooks_closure1: function initHooks_closure1(t0) {
+      this.prototypeForTag = t0;
     },
     extractKeys: function(victim) {
       return J.JSArray_JSArray$markFixed(victim ? Object.keys(victim) : [], null);
-    },
-    printString: function(string) {
-      if (typeof dartPrint == "function") {
-        dartPrint(string);
-        return;
-      }
-      if (typeof console == "object" && typeof console.log != "undefined") {
-        console.log(string);
-        return;
-      }
-      if (typeof window == "object")
-        return;
-      if (typeof print == "function") {
-        print(string);
-        return;
-      }
-      throw "Unable to print message: " + String(string);
     }
   },
   J = {
+    makeDispatchRecord: function(interceptor, proto, extension, indexability) {
+      return {i: interceptor, p: proto, e: extension, x: indexability};
+    },
+    getNativeInterceptor: function(object) {
+      var record, proto, objectProto, $constructor, interceptor;
+      record = object[init.dispatchPropertyName];
+      if (record == null)
+        if ($.initNativeDispatchFlag == null) {
+          H.initNativeDispatch();
+          record = object[init.dispatchPropertyName];
+        }
+      if (record != null) {
+        proto = record.p;
+        if (false === proto)
+          return record.i;
+        if (true === proto)
+          return object;
+        objectProto = Object.getPrototypeOf(object);
+        if (proto === objectProto)
+          return record.i;
+        if (record.e === objectProto)
+          throw H.wrapException(P.UnimplementedError$("Return interceptor for " + H.S(proto(object, record))));
+      }
+      $constructor = object.constructor;
+      interceptor = $constructor == null ? null : $constructor[$.$get$JS_INTEROP_INTERCEPTOR_TAG()];
+      if (interceptor != null)
+        return interceptor;
+      interceptor = H.lookupAndCacheInterceptor(object);
+      if (interceptor != null)
+        return interceptor;
+      if (typeof object == "function")
+        return C.JavaScriptFunction_methods;
+      proto = Object.getPrototypeOf(object);
+      if (proto == null)
+        return C.PlainJavaScriptObject_methods;
+      if (proto === Object.prototype)
+        return C.PlainJavaScriptObject_methods;
+      if (typeof $constructor == "function") {
+        Object.defineProperty($constructor, $.$get$JS_INTEROP_INTERCEPTOR_TAG(), {value: C.UnknownJavaScriptObject_methods, enumerable: false, writable: true, configurable: true});
+        return C.UnknownJavaScriptObject_methods;
+      }
+      return C.UnknownJavaScriptObject_methods;
+    },
     JSArray_JSArray$markFixed: function(allocation, $E) {
       return J.JSArray_markFixedList(H.setRuntimeTypeInfo(allocation, [$E]));
     },
@@ -824,19 +1537,106 @@
         return J.JSBool.prototype;
       if (receiver.constructor == Array)
         return J.JSArray.prototype;
-      return receiver;
+      if (typeof receiver != "object") {
+        if (typeof receiver == "function")
+          return J.JavaScriptFunction.prototype;
+        return receiver;
+      }
+      if (receiver instanceof P.Object)
+        return receiver;
+      return J.getNativeInterceptor(receiver);
     },
-    getInterceptor$as: function(receiver) {
+    getInterceptor$asx: function(receiver) {
       if (typeof receiver == "string")
         return J.JSString.prototype;
       if (receiver == null)
         return receiver;
       if (receiver.constructor == Array)
         return J.JSArray.prototype;
+      if (typeof receiver != "object") {
+        if (typeof receiver == "function")
+          return J.JavaScriptFunction.prototype;
+        return receiver;
+      }
+      if (receiver instanceof P.Object)
+        return receiver;
+      return J.getNativeInterceptor(receiver);
+    },
+    getInterceptor$ax: function(receiver) {
+      if (receiver == null)
+        return receiver;
+      if (receiver.constructor == Array)
+        return J.JSArray.prototype;
+      if (typeof receiver != "object") {
+        if (typeof receiver == "function")
+          return J.JavaScriptFunction.prototype;
+        return receiver;
+      }
+      if (receiver instanceof P.Object)
+        return receiver;
+      return J.getNativeInterceptor(receiver);
+    },
+    getInterceptor$s: function(receiver) {
+      if (typeof receiver == "string")
+        return J.JSString.prototype;
+      if (receiver == null)
+        return receiver;
+      if (!(receiver instanceof P.Object))
+        return J.UnknownJavaScriptObject.prototype;
       return receiver;
     },
-    get$length$as: function(receiver) {
-      return J.getInterceptor$as(receiver).get$length(receiver);
+    getInterceptor$x: function(receiver) {
+      if (receiver == null)
+        return receiver;
+      if (typeof receiver != "object") {
+        if (typeof receiver == "function")
+          return J.JavaScriptFunction.prototype;
+        return receiver;
+      }
+      if (receiver instanceof P.Object)
+        return receiver;
+      return J.getNativeInterceptor(receiver);
+    },
+    set$innerHtml$x: function(receiver, value) {
+      return J.getInterceptor$x(receiver).set$innerHtml(receiver, value);
+    },
+    get$attributes$x: function(receiver) {
+      return J.getInterceptor$x(receiver).get$attributes(receiver);
+    },
+    get$hashCode$: function(receiver) {
+      return J.getInterceptor$(receiver).get$hashCode(receiver);
+    },
+    get$iterator$ax: function(receiver) {
+      return J.getInterceptor$ax(receiver).get$iterator(receiver);
+    },
+    get$length$asx: function(receiver) {
+      return J.getInterceptor$asx(receiver).get$length(receiver);
+    },
+    get$tagName$x: function(receiver) {
+      return J.getInterceptor$x(receiver).get$tagName(receiver);
+    },
+    $eq$: function(receiver, a0) {
+      if (receiver == null)
+        return a0 == null;
+      if (typeof receiver != "object")
+        return a0 != null && receiver === a0;
+      return J.getInterceptor$(receiver).$eq(receiver, a0);
+    },
+    $index$asx: function(receiver, a0) {
+      if (typeof a0 === "number")
+        if (receiver.constructor == Array || typeof receiver == "string" || H.isJsIndexable(receiver, receiver[init.dispatchPropertyName]))
+          if (a0 >>> 0 === a0 && a0 < receiver.length)
+            return receiver[a0];
+      return J.getInterceptor$asx(receiver).$index(receiver, a0);
+    },
+    elementAt$1$ax: function(receiver, a0) {
+      return J.getInterceptor$ax(receiver).elementAt$1(receiver, a0);
+    },
+    remove$0$x: function(receiver) {
+      return J.getInterceptor$x(receiver).remove$0(receiver);
+    },
+    toLowerCase$0$s: function(receiver) {
+      return J.getInterceptor$s(receiver).toLowerCase$0(receiver);
     },
     toString$0$: function(receiver) {
       return J.getInterceptor$(receiver).toString$0(receiver);
@@ -847,6 +1647,14 @@
     },
     JSNull: function JSNull() {
     },
+    JavaScriptObject: function JavaScriptObject() {
+    },
+    PlainJavaScriptObject: function PlainJavaScriptObject() {
+    },
+    UnknownJavaScriptObject: function UnknownJavaScriptObject() {
+    },
+    JavaScriptFunction: function JavaScriptFunction() {
+    },
     JSArray: function JSArray(t0) {
       this.$ti = t0;
     },
@@ -856,7 +1664,7 @@
     ArrayIterator: function ArrayIterator(t0, t1, t2, t3) {
       var _ = this;
       _._iterable = t0;
-      _._length = t1;
+      _.__interceptors$_length = t1;
       _._index = t2;
       _.__interceptors$_current = null;
       _.$ti = t3;
@@ -871,26 +1679,226 @@
     }
   },
   P = {
+    LinkedHashMap_LinkedHashMap$_empty: function($K, $V) {
+      return new H.JsLinkedHashMap([$K, $V]);
+    },
+    LinkedHashSet_LinkedHashSet: function($E) {
+      return new P._LinkedHashSet([$E]);
+    },
+    _LinkedHashSet__newHashTable: function() {
+      var table = Object.create(null);
+      table["<non-identifier-key>"] = table;
+      delete table["<non-identifier-key>"];
+      return table;
+    },
+    IterableBase_iterableToShortString: function(iterable, leftDelimiter, rightDelimiter) {
+      var parts, t1;
+      if (P._isToStringVisiting(iterable)) {
+        if (leftDelimiter === "(" && rightDelimiter === ")")
+          return "(...)";
+        return leftDelimiter + "..." + rightDelimiter;
+      }
+      parts = H.setRuntimeTypeInfo([], [P.String]);
+      t1 = $.$get$_toStringVisiting();
+      C.JSArray_methods.add$1(t1, iterable);
+      try {
+        P._iterablePartsToStrings(iterable, parts);
+      } finally {
+        if (0 >= t1.length)
+          return H.ioore(t1, -1);
+        t1.pop();
+      }
+      t1 = P.StringBuffer__writeAll(leftDelimiter, H.listSuperNativeTypeCheck(parts, "$isIterable"), ", ") + rightDelimiter;
+      return t1.charCodeAt(0) == 0 ? t1 : t1;
+    },
+    IterableBase_iterableToFullString: function(iterable, leftDelimiter, rightDelimiter) {
+      var buffer, t1, t2;
+      if (P._isToStringVisiting(iterable))
+        return leftDelimiter + "..." + rightDelimiter;
+      buffer = new P.StringBuffer(leftDelimiter);
+      t1 = $.$get$_toStringVisiting();
+      C.JSArray_methods.add$1(t1, iterable);
+      try {
+        t2 = buffer;
+        t2._contents = P.StringBuffer__writeAll(t2._contents, iterable, ", ");
+      } finally {
+        if (0 >= t1.length)
+          return H.ioore(t1, -1);
+        t1.pop();
+      }
+      buffer._contents += rightDelimiter;
+      t1 = buffer._contents;
+      return t1.charCodeAt(0) == 0 ? t1 : t1;
+    },
+    _isToStringVisiting: function(o) {
+      var i, t1;
+      for (i = 0; t1 = $.$get$_toStringVisiting(), i < t1.length; ++i)
+        if (o === t1[i])
+          return true;
+      return false;
+    },
+    _iterablePartsToStrings: function(iterable, parts) {
+      var it, $length, count, next, ultimateString, penultimateString, penultimate, ultimate, ultimate0, elision;
+      H.assertSubtype(parts, "$isList", [P.String], "$asList");
+      it = iterable.get$iterator(iterable);
+      $length = 0;
+      count = 0;
+      while (true) {
+        if (!($length < 80 || count < 3))
+          break;
+        if (!it.moveNext$0())
+          return;
+        next = H.S(it.get$current());
+        C.JSArray_methods.add$1(parts, next);
+        $length += next.length + 2;
+        ++count;
+      }
+      if (!it.moveNext$0()) {
+        if (count <= 5)
+          return;
+        if (0 >= parts.length)
+          return H.ioore(parts, -1);
+        ultimateString = parts.pop();
+        if (0 >= parts.length)
+          return H.ioore(parts, -1);
+        penultimateString = parts.pop();
+      } else {
+        penultimate = it.get$current();
+        ++count;
+        if (!it.moveNext$0()) {
+          if (count <= 4) {
+            C.JSArray_methods.add$1(parts, H.S(penultimate));
+            return;
+          }
+          ultimateString = H.S(penultimate);
+          if (0 >= parts.length)
+            return H.ioore(parts, -1);
+          penultimateString = parts.pop();
+          $length += ultimateString.length + 2;
+        } else {
+          ultimate = it.get$current();
+          ++count;
+          for (; it.moveNext$0(); penultimate = ultimate, ultimate = ultimate0) {
+            ultimate0 = it.get$current();
+            ++count;
+            if (count > 100) {
+              while (true) {
+                if (!($length > 75 && count > 3))
+                  break;
+                if (0 >= parts.length)
+                  return H.ioore(parts, -1);
+                $length -= parts.pop().length + 2;
+                --count;
+              }
+              C.JSArray_methods.add$1(parts, "...");
+              return;
+            }
+          }
+          penultimateString = H.S(penultimate);
+          ultimateString = H.S(ultimate);
+          $length += ultimateString.length + penultimateString.length + 4;
+        }
+      }
+      if (count > parts.length + 2) {
+        $length += 5;
+        elision = "...";
+      } else
+        elision = null;
+      while (true) {
+        if (!($length > 80 && parts.length > 3))
+          break;
+        if (0 >= parts.length)
+          return H.ioore(parts, -1);
+        $length -= parts.pop().length + 2;
+        if (elision == null) {
+          $length += 5;
+          elision = "...";
+        }
+      }
+      if (elision != null)
+        C.JSArray_methods.add$1(parts, elision);
+      C.JSArray_methods.add$1(parts, penultimateString);
+      C.JSArray_methods.add$1(parts, ultimateString);
+    },
+    LinkedHashSet_LinkedHashSet$from: function(elements, $E) {
+      var result, t1, _i;
+      result = P.LinkedHashSet_LinkedHashSet($E);
+      for (t1 = elements.length, _i = 0; _i < elements.length; elements.length === t1 || (0, H.throwConcurrentModificationError)(elements), ++_i)
+        result.add$1(0, H.assertSubtypeOfRuntimeType(elements[_i], $E));
+      return result;
+    },
+    MapBase_mapToString: function(m) {
+      var result, t1;
+      t1 = {};
+      if (P._isToStringVisiting(m))
+        return "{...}";
+      result = new P.StringBuffer("");
+      try {
+        C.JSArray_methods.add$1($.$get$_toStringVisiting(), m);
+        result._contents += "{";
+        t1.first = true;
+        m.forEach$1(0, new P.MapBase_mapToString_closure(t1, result));
+        result._contents += "}";
+      } finally {
+        t1 = $.$get$_toStringVisiting();
+        if (0 >= t1.length)
+          return H.ioore(t1, -1);
+        t1.pop();
+      }
+      t1 = result._contents;
+      return t1.charCodeAt(0) == 0 ? t1 : t1;
+    },
+    _LinkedHashSet: function _LinkedHashSet(t0) {
+      var _ = this;
+      _._collection$_length = 0;
+      _._last = _._first = _._rest = _._nums = _._strings = null;
+      _._modifications = 0;
+      _.$ti = t0;
+    },
+    _LinkedHashSetCell: function _LinkedHashSetCell(t0) {
+      this._element = t0;
+      this._next = null;
+    },
+    _LinkedHashSetIterator: function _LinkedHashSetIterator(t0, t1, t2) {
+      var _ = this;
+      _._set = t0;
+      _._modifications = t1;
+      _._collection$_current = _._cell = null;
+      _.$ti = t2;
+    },
+    ListBase: function ListBase() {
+    },
+    ListMixin: function ListMixin() {
+    },
+    MapBase: function MapBase() {
+    },
+    MapBase_mapToString_closure: function MapBase_mapToString_closure(t0, t1) {
+      this._box_0 = t0;
+      this.result = t1;
+    },
+    MapMixin: function MapMixin() {
+    },
+    _SetBase: function _SetBase() {
+    },
+    _ListBase_Object_ListMixin: function _ListBase_Object_ListMixin() {
+    },
     Error__objectToString: function(object) {
       if (object instanceof H.Closure)
         return object.toString$0(0);
       return "Instance of '" + H.Primitives_objectTypeName(object) + "'";
     },
-    RegExp_RegExp: function(source) {
-      return new H.JSSyntaxRegExp(source, H.JSSyntaxRegExp_makeNative(source, false, true, false));
-    },
     StringBuffer__writeAll: function(string, objects, separator) {
-      var iterator = new J.ArrayIterator(objects, objects.length, 0, [H.getTypeArgumentByIndex(objects, 0)]);
+      var iterator = J.get$iterator$ax(objects);
       if (!iterator.moveNext$0())
         return string;
       if (separator.length === 0) {
         do
-          string += H.S(iterator.__interceptors$_current);
+          string += H.S(iterator.get$current());
         while (iterator.moveNext$0());
       } else {
-        string += H.S(iterator.__interceptors$_current);
+        string += H.S(iterator.get$current());
         for (; iterator.moveNext$0();)
-          string = string + separator + H.S(iterator.__interceptors$_current);
+          string = string + separator + H.S(iterator.get$current());
       }
       return string;
     },
@@ -908,11 +1916,17 @@
       return new P.RangeError(null, null, true, value, $name, "Value not in range");
     },
     IndexError$: function(invalidValue, indexable, $name, message, $length) {
-      var t1 = $length == null ? J.get$length$as(indexable) : $length;
+      var t1 = $length == null ? J.get$length$asx(indexable) : $length;
       return new P.IndexError(t1, true, invalidValue, $name, "Index out of range");
     },
     UnsupportedError$: function(message) {
       return new P.UnsupportedError(message);
+    },
+    UnimplementedError$: function(message) {
+      return new P.UnimplementedError(message);
+    },
+    StateError$: function(message) {
+      return new P.StateError(message);
     },
     ConcurrentModificationError$: function(modifiedObject) {
       return new P.ConcurrentModificationError(modifiedObject);
@@ -952,18 +1966,27 @@
     UnsupportedError: function UnsupportedError(t0) {
       this.message = t0;
     },
+    UnimplementedError: function UnimplementedError(t0) {
+      this.message = t0;
+    },
+    StateError: function StateError(t0) {
+      this.message = t0;
+    },
     ConcurrentModificationError: function ConcurrentModificationError(t0) {
       this.modifiedObject = t0;
+    },
+    StackOverflowError: function StackOverflowError() {
     },
     CyclicInitializationError: function CyclicInitializationError(t0) {
       this.variableName = t0;
     },
-    FormatException: function FormatException(t0, t1, t2) {
-      this.message = t0;
-      this.source = t1;
-      this.offset = t2;
+    Function: function Function() {
     },
     int: function int() {
+    },
+    Iterable: function Iterable() {
+    },
+    Iterator: function Iterator() {
     },
     List: function List() {
     },
@@ -978,43 +2001,218 @@
     StringBuffer: function StringBuffer(t0) {
       this._contents = t0;
     },
-    IterableBase_iterableToFullString: function(iterable, leftDelimiter, rightDelimiter) {
-      var buffer, t1, t2;
-      if (P._isToStringVisiting(iterable))
-        return leftDelimiter + "..." + rightDelimiter;
-      buffer = new P.StringBuffer(leftDelimiter);
-      t1 = $.$get$_toStringVisiting();
-      C.JSArray_methods.add$1(t1, iterable);
-      try {
-        t2 = buffer;
-        t2._contents = P.StringBuffer__writeAll(t2._contents, iterable, ", ");
-      } finally {
-        if (0 >= t1.length)
-          return H.ioore(t1, -1);
-        t1.pop();
-      }
-      buffer._contents += rightDelimiter;
-      t1 = buffer._contents;
-      return t1.charCodeAt(0) == 0 ? t1 : t1;
+    ScriptElement: function ScriptElement() {
     },
-    _isToStringVisiting: function(o) {
-      var i, t1;
-      for (i = 0; t1 = $.$get$_toStringVisiting(), i < t1.length; ++i)
-        if (o === t1[i])
-          return true;
-      return false;
+    SvgElement: function SvgElement() {
+    }
+  },
+  W = {
+    Element_Element$html: function(html, treeSanitizer, validator) {
+      var t1, fragment, it, result;
+      t1 = document.body;
+      fragment = (t1 && C.BodyElement_methods).createFragment$3$treeSanitizer$validator(t1, html, treeSanitizer, validator);
+      fragment.toString;
+      t1 = W.Node;
+      t1 = new H.WhereIterable(new W._ChildNodeListLazy(fragment), H.functionTypeCheck(new W.Element_Element$html_closure(), {func: 1, ret: P.bool, args: [t1]}), [t1]);
+      it = t1.get$iterator(t1);
+      if (!it.moveNext$0())
+        H.throwExpression(H.IterableElementError_noElement());
+      result = it.get$current();
+      if (it.moveNext$0())
+        H.throwExpression(H.IterableElementError_tooMany());
+      return H.interceptedTypeCheck(result, "$isElement");
+    },
+    Element__safeTagName: function(element) {
+      var result, t1, exception;
+      result = "element tag unavailable";
+      try {
+        t1 = J.get$tagName$x(element);
+        if (typeof t1 === "string")
+          result = element.tagName;
+      } catch (exception) {
+        H.unwrapException(exception);
+      }
+      return result;
+    },
+    _Html5NodeValidator$: function(uriPolicy) {
+      var e, t1;
+      e = document.createElement("a");
+      t1 = new W._SameOriginUriPolicy(e, window.location);
+      t1 = new W._Html5NodeValidator(t1);
+      t1._Html5NodeValidator$1$uriPolicy(uriPolicy);
+      return t1;
+    },
+    _Html5NodeValidator__standardAttributeValidator: function(element, attributeName, value, context) {
+      H.interceptedTypeCheck(element, "$isElement");
+      H.stringTypeCheck(attributeName);
+      H.stringTypeCheck(value);
+      H.interceptedTypeCheck(context, "$is_Html5NodeValidator");
+      return true;
+    },
+    _Html5NodeValidator__uriAttributeValidator: function(element, attributeName, value, context) {
+      var t1, t2, t3;
+      H.interceptedTypeCheck(element, "$isElement");
+      H.stringTypeCheck(attributeName);
+      H.stringTypeCheck(value);
+      t1 = H.interceptedTypeCheck(context, "$is_Html5NodeValidator").uriPolicy;
+      t2 = t1._hiddenAnchor;
+      t2.href = value;
+      t3 = t2.hostname;
+      t1 = t1._loc;
+      if (!(t3 == t1.hostname && t2.port == t1.port && t2.protocol == t1.protocol))
+        if (t3 === "")
+          if (t2.port === "") {
+            t1 = t2.protocol;
+            t1 = t1 === ":" || t1 === "";
+          } else
+            t1 = false;
+        else
+          t1 = false;
+      else
+        t1 = true;
+      return t1;
+    },
+    _TemplatingNodeValidator$: function() {
+      var t1, t2, t3, t4, t5;
+      t1 = P.String;
+      t2 = P.LinkedHashSet_LinkedHashSet$from(C.List_wSV, t1);
+      t3 = H.getTypeArgumentByIndex(C.List_wSV, 0);
+      t4 = H.functionTypeCheck(new W._TemplatingNodeValidator_closure(), {func: 1, ret: t1, args: [t3]});
+      t5 = H.setRuntimeTypeInfo(["TEMPLATE"], [t1]);
+      t2 = new W._TemplatingNodeValidator(t2, P.LinkedHashSet_LinkedHashSet(t1), P.LinkedHashSet_LinkedHashSet(t1), P.LinkedHashSet_LinkedHashSet(t1), null);
+      t2._SimpleNodeValidator$4$allowedAttributes$allowedElements$allowedUriAttributes(null, new H.MappedListIterable(C.List_wSV, t4, [t3, t1]), t5, null);
+      return t2;
+    },
+    HtmlElement: function HtmlElement() {
+    },
+    AnchorElement: function AnchorElement() {
+    },
+    AreaElement: function AreaElement() {
+    },
+    BaseElement: function BaseElement() {
+    },
+    BodyElement: function BodyElement() {
+    },
+    CharacterData: function CharacterData() {
+    },
+    DomException: function DomException() {
+    },
+    Element: function Element() {
+    },
+    Element_Element$html_closure: function Element_Element$html_closure() {
+    },
+    EventTarget: function EventTarget() {
+    },
+    FormElement: function FormElement() {
+    },
+    Location: function Location() {
+    },
+    _ChildNodeListLazy: function _ChildNodeListLazy(t0) {
+      this._this = t0;
+    },
+    Node: function Node() {
+    },
+    NodeList: function NodeList() {
+    },
+    SelectElement: function SelectElement() {
+    },
+    TableElement: function TableElement() {
+    },
+    TableRowElement: function TableRowElement() {
+    },
+    TableSectionElement: function TableSectionElement() {
+    },
+    TemplateElement: function TemplateElement() {
+    },
+    _Attr: function _Attr() {
+    },
+    _NamedNodeMap: function _NamedNodeMap() {
+    },
+    _AttributeMap: function _AttributeMap() {
+    },
+    _ElementAttributeMap: function _ElementAttributeMap(t0) {
+      this._html$_element = t0;
+    },
+    _Html5NodeValidator: function _Html5NodeValidator(t0) {
+      this.uriPolicy = t0;
+    },
+    ImmutableListMixin: function ImmutableListMixin() {
+    },
+    NodeValidatorBuilder: function NodeValidatorBuilder(t0) {
+      this._validators = t0;
+    },
+    NodeValidatorBuilder_allowsElement_closure: function NodeValidatorBuilder_allowsElement_closure(t0) {
+      this.element = t0;
+    },
+    NodeValidatorBuilder_allowsAttribute_closure: function NodeValidatorBuilder_allowsAttribute_closure(t0, t1, t2) {
+      this.element = t0;
+      this.attributeName = t1;
+      this.value = t2;
+    },
+    _SimpleNodeValidator: function _SimpleNodeValidator() {
+    },
+    _SimpleNodeValidator_closure: function _SimpleNodeValidator_closure() {
+    },
+    _SimpleNodeValidator_closure0: function _SimpleNodeValidator_closure0() {
+    },
+    _TemplatingNodeValidator: function _TemplatingNodeValidator(t0, t1, t2, t3, t4) {
+      var _ = this;
+      _._templateAttrs = t0;
+      _.allowedElements = t1;
+      _.allowedAttributes = t2;
+      _.allowedUriAttributes = t3;
+      _.uriPolicy = t4;
+    },
+    _TemplatingNodeValidator_closure: function _TemplatingNodeValidator_closure() {
+    },
+    _SvgNodeValidator: function _SvgNodeValidator() {
+    },
+    FixedSizeListIterator: function FixedSizeListIterator(t0, t1, t2, t3) {
+      var _ = this;
+      _._array = t0;
+      _._length = t1;
+      _._position = t2;
+      _._current = null;
+      _.$ti = t3;
+    },
+    NodeValidator: function NodeValidator() {
+    },
+    _SameOriginUriPolicy: function _SameOriginUriPolicy(t0, t1) {
+      this._hiddenAnchor = t0;
+      this._loc = t1;
+    },
+    _ValidatingTreeSanitizer: function _ValidatingTreeSanitizer(t0) {
+      this.validator = t0;
+    },
+    _ValidatingTreeSanitizer_sanitizeTree_walk: function _ValidatingTreeSanitizer_sanitizeTree_walk(t0) {
+      this.$this = t0;
+    },
+    _NodeList_Interceptor_ListMixin: function _NodeList_Interceptor_ListMixin() {
+    },
+    _NodeList_Interceptor_ListMixin_ImmutableListMixin: function _NodeList_Interceptor_ListMixin_ImmutableListMixin() {
+    },
+    __NamedNodeMap_Interceptor_ListMixin: function __NamedNodeMap_Interceptor_ListMixin() {
+    },
+    __NamedNodeMap_Interceptor_ListMixin_ImmutableListMixin: function __NamedNodeMap_Interceptor_ListMixin_ImmutableListMixin() {
     }
   },
   F = {
     main: function() {
-      H.printString(H.S(H.assertSubtype(C.JSString_methods.split$1($.preamble, P.RegExp_RegExp("(?=[.\\s]|\\b)")), "$isList", [P.String], "$asList")));
+      var t1 = $.preamble;
+      J.set$innerHtml$x(document.querySelector(".text-body"), t1);
     }
   };
-  var holders = [C, H, J, P, F];
+  var holders = [C, H, J, P, W, F];
   hunkHelpers.setFunctionNamesIfNecessary(holders);
   var $ = {};
   H.JS_CONST.prototype = {};
   J.Interceptor.prototype = {
+    $eq: function(receiver, other) {
+      return receiver === other;
+    },
+    get$hashCode: function(receiver) {
+      return H.Primitives_objectHashCode(receiver);
+    },
     toString$0: function(receiver) {
       return "Instance of '" + H.Primitives_objectTypeName(receiver) + "'";
     }
@@ -1023,12 +2221,44 @@
     toString$0: function(receiver) {
       return String(receiver);
     },
+    get$hashCode: function(receiver) {
+      return receiver ? 519018 : 218159;
+    },
     $isbool: 1
   };
   J.JSNull.prototype = {
+    $eq: function(receiver, other) {
+      return null == other;
+    },
     toString$0: function(receiver) {
       return "null";
+    },
+    get$hashCode: function(receiver) {
+      return 0;
+    },
+    $isNull: 1
+  };
+  J.JavaScriptObject.prototype = {
+    get$hashCode: function(receiver) {
+      return 0;
+    },
+    toString$0: function(receiver) {
+      return String(receiver);
     }
+  };
+  J.PlainJavaScriptObject.prototype = {};
+  J.UnknownJavaScriptObject.prototype = {};
+  J.JavaScriptFunction.prototype = {
+    toString$0: function(receiver) {
+      var dartClosure = receiver[$.$get$DART_CLOSURE_PROPERTY_NAME()];
+      if (dartClosure == null)
+        return this.super$JavaScriptObject$toString(receiver);
+      return "JavaScript function for " + H.S(J.toString$0$(dartClosure));
+    },
+    $signature: function() {
+      return {func: 1, opt: [,,,,,,,,,,,,,,,,]};
+    },
+    $isFunction: 1
   };
   J.JSArray.prototype = {
     add$1: function(receiver, value) {
@@ -1037,8 +2267,38 @@
         H.throwExpression(P.UnsupportedError$("add"));
       receiver.push(value);
     },
+    elementAt$1: function(receiver, index) {
+      if (index >= receiver.length)
+        return H.ioore(receiver, index);
+      return receiver[index];
+    },
+    any$1: function(receiver, test) {
+      var end, i;
+      H.functionTypeCheck(test, {func: 1, ret: P.bool, args: [H.getTypeArgumentByIndex(receiver, 0)]});
+      end = receiver.length;
+      for (i = 0; i < end; ++i) {
+        if (test.call$1(receiver[i]))
+          return true;
+        if (receiver.length !== end)
+          throw H.wrapException(P.ConcurrentModificationError$(receiver));
+      }
+      return false;
+    },
+    contains$1: function(receiver, other) {
+      var i;
+      for (i = 0; i < receiver.length; ++i)
+        if (J.$eq$(receiver[i], other))
+          return true;
+      return false;
+    },
     toString$0: function(receiver) {
       return P.IterableBase_iterableToFullString(receiver, "[", "]");
+    },
+    get$iterator: function(receiver) {
+      return new J.ArrayIterator(receiver, receiver.length, 0, [H.getTypeArgumentByIndex(receiver, 0)]);
+    },
+    get$hashCode: function(receiver) {
+      return H.Primitives_objectHashCode(receiver);
     },
     get$length: function(receiver) {
       return receiver.length;
@@ -1048,11 +2308,14 @@
   };
   J.JSUnmodifiableArray.prototype = {};
   J.ArrayIterator.prototype = {
+    get$current: function() {
+      return this.__interceptors$_current;
+    },
     moveNext$0: function() {
       var t1, $length, t2;
       t1 = this._iterable;
       $length = t1.length;
-      if (this._length !== $length)
+      if (this.__interceptors$_length !== $length)
         throw H.wrapException(H.throwConcurrentModificationError(t1));
       t2 = this._index;
       if (t2 >= $length) {
@@ -1065,7 +2328,8 @@
     },
     set$__interceptors$_current: function(_current) {
       this.__interceptors$_current = H.assertSubtypeOfRuntimeType(_current, H.getTypeArgumentByIndex(this, 0));
-    }
+    },
+    $isIterator: 1
   };
   J.JSNumber.prototype = {
     toString$0: function(receiver) {
@@ -1073,6 +2337,30 @@
         return "-0.0";
       else
         return "" + receiver;
+    },
+    get$hashCode: function(receiver) {
+      var intValue, absolute, floorLog2, factor, scaled;
+      intValue = receiver | 0;
+      if (receiver === intValue)
+        return 536870911 & intValue;
+      absolute = Math.abs(receiver);
+      floorLog2 = Math.log(absolute) / 0.6931471805599453 | 0;
+      factor = Math.pow(2, floorLog2);
+      scaled = absolute < 1 ? absolute / factor : factor / absolute;
+      return 536870911 & ((scaled * 9007199254740992 | 0) + (scaled * 3542243181176521 | 0)) * 599197 + floorLog2 * 1259;
+    },
+    _shrOtherPositive$1: function(receiver, other) {
+      var t1;
+      if (receiver > 0)
+        t1 = this._shrBothPositive$1(receiver, other);
+      else {
+        t1 = other > 31 ? 31 : other;
+        t1 = receiver >> t1 >>> 0;
+      }
+      return t1;
+    },
+    _shrBothPositive$1: function(receiver, other) {
+      return other > 31 ? 0 : receiver >>> other;
     },
     $isnum: 1
   };
@@ -1089,49 +2377,28 @@
         throw H.wrapException(P.ArgumentError$value(other, null, null));
       return receiver + other;
     },
-    split$1: function(receiver, pattern) {
-      var t1 = pattern.get$_nativeAnchoredVersion().exec("").length;
-      if (t1 - 2 === 0)
-        return H.setRuntimeTypeInfo(receiver.split(pattern._nativeRegExp), [P.String]);
-      else
-        return this._defaultSplit$1(receiver, pattern);
+    startsWith$1: function(receiver, pattern) {
+      var otherLength = pattern.length;
+      if (otherLength > receiver.length)
+        return false;
+      return pattern === receiver.substring(0, otherLength);
     },
-    _defaultSplit$1: function(receiver, pattern) {
-      var result, t1, start, $length, t2, matchStart, matchEnd;
-      result = H.setRuntimeTypeInfo([], [P.String]);
-      t1 = new H._AllMatchesIterator(pattern, receiver, 0);
-      start = 0;
-      $length = 1;
-      for (; t1.moveNext$0();) {
-        t2 = t1._current._match;
-        matchStart = t2.index;
-        matchEnd = matchStart + t2[0].length;
-        $length = matchEnd - matchStart;
-        if ($length === 0 && start === matchStart)
-          continue;
-        C.JSArray_methods.add$1(result, this.substring$2(receiver, start, matchStart));
-        start = matchEnd;
-      }
-      if (start < receiver.length || $length > 0)
-        C.JSArray_methods.add$1(result, this.substring$1(receiver, start));
-      return result;
-    },
-    substring$2: function(receiver, startIndex, endIndex) {
-      if (endIndex == null)
-        endIndex = receiver.length;
-      if (startIndex < 0)
-        throw H.wrapException(P.RangeError$value(startIndex, null));
-      if (startIndex > endIndex)
-        throw H.wrapException(P.RangeError$value(startIndex, null));
-      if (endIndex > receiver.length)
-        throw H.wrapException(P.RangeError$value(endIndex, null));
-      return receiver.substring(startIndex, endIndex);
-    },
-    substring$1: function($receiver, startIndex) {
-      return this.substring$2($receiver, startIndex, null);
+    toLowerCase$0: function(receiver) {
+      return receiver.toLowerCase();
     },
     toString$0: function(receiver) {
       return receiver;
+    },
+    get$hashCode: function(receiver) {
+      var t1, hash, i;
+      for (t1 = receiver.length, hash = 0, i = 0; i < t1; ++i) {
+        hash = 536870911 & hash + receiver.charCodeAt(i);
+        hash = 536870911 & hash + ((524287 & hash) << 10);
+        hash ^= hash >> 6;
+      }
+      hash = 536870911 & hash + ((67108863 & hash) << 3);
+      hash ^= hash >> 11;
+      return 536870911 & hash + ((16383 & hash) << 15);
     },
     get$length: function(receiver) {
       return receiver.length;
@@ -1139,7 +2406,136 @@
     $isPattern: 1,
     $isString: 1
   };
+  H.EfficientLengthIterable.prototype = {};
+  H.ListIterable.prototype = {
+    get$iterator: function(_) {
+      return new H.ListIterator(this, this.get$length(this), 0, [H.getRuntimeTypeArgument(this, "ListIterable", 0)]);
+    },
+    where$1: function(_, test) {
+      return this.super$Iterable$where(0, H.functionTypeCheck(test, {func: 1, ret: P.bool, args: [H.getRuntimeTypeArgument(this, "ListIterable", 0)]}));
+    }
+  };
+  H.ListIterator.prototype = {
+    get$current: function() {
+      return this.__internal$_current;
+    },
+    moveNext$0: function() {
+      var t1, t2, $length, t3;
+      t1 = this.__internal$_iterable;
+      t2 = J.getInterceptor$asx(t1);
+      $length = t2.get$length(t1);
+      if (this.__internal$_length !== $length)
+        throw H.wrapException(P.ConcurrentModificationError$(t1));
+      t3 = this.__internal$_index;
+      if (t3 >= $length) {
+        this.set$__internal$_current(null);
+        return false;
+      }
+      this.set$__internal$_current(t2.elementAt$1(t1, t3));
+      ++this.__internal$_index;
+      return true;
+    },
+    set$__internal$_current: function(_current) {
+      this.__internal$_current = H.assertSubtypeOfRuntimeType(_current, H.getTypeArgumentByIndex(this, 0));
+    },
+    $isIterator: 1
+  };
+  H.MappedListIterable.prototype = {
+    get$length: function(_) {
+      return J.get$length$asx(this._source);
+    },
+    elementAt$1: function(_, index) {
+      return this._f.call$1(J.elementAt$1$ax(this._source, index));
+    },
+    $asListIterable: function($S, $T) {
+      return [$T];
+    },
+    $asIterable: function($S, $T) {
+      return [$T];
+    }
+  };
+  H.WhereIterable.prototype = {
+    get$iterator: function(_) {
+      return new H.WhereIterator(J.get$iterator$ax(this.__internal$_iterable), this._f, this.$ti);
+    }
+  };
+  H.WhereIterator.prototype = {
+    moveNext$0: function() {
+      var t1, t2;
+      for (t1 = this._iterator, t2 = this._f; t1.moveNext$0();)
+        if (t2.call$1(t1.get$current()))
+          return true;
+      return false;
+    },
+    get$current: function() {
+      return this._iterator.get$current();
+    }
+  };
+  H.TypeErrorDecoder.prototype = {
+    matchTypeError$1: function(message) {
+      var match, result, t1;
+      match = new RegExp(this._pattern).exec(message);
+      if (match == null)
+        return;
+      result = Object.create(null);
+      t1 = this._arguments;
+      if (t1 !== -1)
+        result.arguments = match[t1 + 1];
+      t1 = this._argumentsExpr;
+      if (t1 !== -1)
+        result.argumentsExpr = match[t1 + 1];
+      t1 = this._expr;
+      if (t1 !== -1)
+        result.expr = match[t1 + 1];
+      t1 = this._method;
+      if (t1 !== -1)
+        result.method = match[t1 + 1];
+      t1 = this._receiver;
+      if (t1 !== -1)
+        result.receiver = match[t1 + 1];
+      return result;
+    }
+  };
+  H.NullError.prototype = {
+    toString$0: function(_) {
+      var t1 = this._method;
+      if (t1 == null)
+        return "NoSuchMethodError: " + H.S(this._message);
+      return "NoSuchMethodError: method not found: '" + t1 + "' on null";
+    }
+  };
+  H.JsNoSuchMethodError.prototype = {
+    toString$0: function(_) {
+      var t1, t2;
+      t1 = this._method;
+      if (t1 == null)
+        return "NoSuchMethodError: " + H.S(this._message);
+      t2 = this._receiver;
+      if (t2 == null)
+        return "NoSuchMethodError: method not found: '" + t1 + "' (" + H.S(this._message) + ")";
+      return "NoSuchMethodError: method not found: '" + t1 + "' on '" + t2 + "' (" + H.S(this._message) + ")";
+    }
+  };
+  H.UnknownJsTypeError.prototype = {
+    toString$0: function(_) {
+      var t1 = this._message;
+      return t1.length === 0 ? "Error" : "Error: " + t1;
+    }
+  };
+  H.unwrapException_saveStackTrace.prototype = {
+    call$1: function(error) {
+      if (!!J.getInterceptor$(error).$isError)
+        if (error.$thrownJsError == null)
+          error.$thrownJsError = this.ex;
+      return error;
+    },
+    $signature: 0
+  };
   H.Closure.prototype = {
+    toString$0: function(_) {
+      return "Closure '" + H.Primitives_objectTypeName(this).trim() + "'";
+    },
+    $isFunction: 1,
     get$$call: function() {
       return this;
     },
@@ -1147,77 +2543,438 @@
     $requiredArgCount: 1,
     $defaultValues: null
   };
+  H.TearOffClosure.prototype = {};
+  H.StaticClosure.prototype = {
+    toString$0: function(_) {
+      var $name = this.$static_name;
+      if ($name == null)
+        return "Closure of unknown static method";
+      return "Closure '" + H.unminifyOrTag($name) + "'";
+    }
+  };
+  H.BoundClosure.prototype = {
+    $eq: function(_, other) {
+      if (other == null)
+        return false;
+      if (this === other)
+        return true;
+      if (!(other instanceof H.BoundClosure))
+        return false;
+      return this._self === other._self && this._target === other._target && this._receiver === other._receiver;
+    },
+    get$hashCode: function(_) {
+      var t1, receiverHashCode;
+      t1 = this._receiver;
+      if (t1 == null)
+        receiverHashCode = H.Primitives_objectHashCode(this._self);
+      else
+        receiverHashCode = typeof t1 !== "object" ? J.get$hashCode$(t1) : H.Primitives_objectHashCode(t1);
+      return (receiverHashCode ^ H.Primitives_objectHashCode(this._target)) >>> 0;
+    },
+    toString$0: function(_) {
+      var receiver = this._receiver;
+      if (receiver == null)
+        receiver = this._self;
+      return "Closure '" + H.S(this._name) + "' of " + ("Instance of '" + H.Primitives_objectTypeName(receiver) + "'");
+    }
+  };
   H.TypeErrorImplementation.prototype = {
     toString$0: function(_) {
       return this.message;
     }
   };
-  H.JSSyntaxRegExp.prototype = {
+  H.RuntimeError.prototype = {
     toString$0: function(_) {
-      return "RegExp/" + this.pattern + "/";
+      return "RuntimeError: " + this.message;
+    }
+  };
+  H.JsLinkedHashMap.prototype = {
+    get$length: function(_) {
+      return this.__js_helper$_length;
     },
-    get$_nativeGlobalVersion: function() {
-      var t1 = this._nativeGlobalRegExp;
-      if (t1 != null)
+    get$keys: function() {
+      return new H.LinkedHashMapKeyIterable(this, [H.getTypeArgumentByIndex(this, 0)]);
+    },
+    $index: function(_, key) {
+      var strings, cell, t1, nums;
+      if (typeof key === "string") {
+        strings = this.__js_helper$_strings;
+        if (strings == null)
+          return;
+        cell = this._getTableCell$2(strings, key);
+        t1 = cell == null ? null : cell.hashMapCellValue;
         return t1;
-      t1 = this._nativeRegExp;
-      t1 = H.JSSyntaxRegExp_makeNative(this.pattern, t1.multiline, !t1.ignoreCase, true);
-      this._nativeGlobalRegExp = t1;
-      return t1;
-    },
-    get$_nativeAnchoredVersion: function() {
-      var t1 = this._nativeAnchoredRegExp;
-      if (t1 != null)
+      } else if (typeof key === "number" && (key & 0x3ffffff) === key) {
+        nums = this.__js_helper$_nums;
+        if (nums == null)
+          return;
+        cell = this._getTableCell$2(nums, key);
+        t1 = cell == null ? null : cell.hashMapCellValue;
         return t1;
-      t1 = this._nativeRegExp;
-      t1 = H.JSSyntaxRegExp_makeNative(this.pattern + "|()", t1.multiline, !t1.ignoreCase, true);
-      this._nativeAnchoredRegExp = t1;
-      return t1;
+      } else
+        return this.internalGet$1(key);
     },
-    _execGlobal$2: function(string, start) {
-      var regexp, match;
-      regexp = this.get$_nativeGlobalVersion();
-      regexp.lastIndex = start;
-      match = regexp.exec(string);
-      if (match == null)
+    internalGet$1: function(key) {
+      var rest, bucket, index;
+      rest = this.__js_helper$_rest;
+      if (rest == null)
         return;
-      return new H._MatchImplementation(match);
+      bucket = this._getTableBucket$2(rest, J.get$hashCode$(key) & 0x3ffffff);
+      index = this.internalFindBucketIndex$2(bucket, key);
+      if (index < 0)
+        return;
+      return bucket[index].hashMapCellValue;
     },
-    $isPattern: 1
-  };
-  H._MatchImplementation.prototype = {
-    get$end: function() {
-      var t1 = this._match;
-      return t1.index + t1[0].length;
+    $indexSet: function(_, key, value) {
+      var strings, nums, rest, hash, bucket, index;
+      H.assertSubtypeOfRuntimeType(key, H.getTypeArgumentByIndex(this, 0));
+      H.assertSubtypeOfRuntimeType(value, H.getTypeArgumentByIndex(this, 1));
+      if (typeof key === "string") {
+        strings = this.__js_helper$_strings;
+        if (strings == null) {
+          strings = this._newHashTable$0();
+          this.__js_helper$_strings = strings;
+        }
+        this.__js_helper$_addHashTableEntry$3(strings, key, value);
+      } else if (typeof key === "number" && (key & 0x3ffffff) === key) {
+        nums = this.__js_helper$_nums;
+        if (nums == null) {
+          nums = this._newHashTable$0();
+          this.__js_helper$_nums = nums;
+        }
+        this.__js_helper$_addHashTableEntry$3(nums, key, value);
+      } else {
+        rest = this.__js_helper$_rest;
+        if (rest == null) {
+          rest = this._newHashTable$0();
+          this.__js_helper$_rest = rest;
+        }
+        hash = J.get$hashCode$(key) & 0x3ffffff;
+        bucket = this._getTableBucket$2(rest, hash);
+        if (bucket == null)
+          this._setTableEntry$3(rest, hash, [this.__js_helper$_newLinkedCell$2(key, value)]);
+        else {
+          index = this.internalFindBucketIndex$2(bucket, key);
+          if (index >= 0)
+            bucket[index].hashMapCellValue = value;
+          else
+            bucket.push(this.__js_helper$_newLinkedCell$2(key, value));
+        }
+      }
     },
-    $isMatch: 1
+    forEach$1: function(_, action) {
+      var cell, modifications;
+      H.functionTypeCheck(action, {func: 1, ret: -1, args: [H.getTypeArgumentByIndex(this, 0), H.getTypeArgumentByIndex(this, 1)]});
+      cell = this.__js_helper$_first;
+      modifications = this.__js_helper$_modifications;
+      for (; cell != null;) {
+        action.call$2(cell.hashMapCellKey, cell.hashMapCellValue);
+        if (modifications !== this.__js_helper$_modifications)
+          throw H.wrapException(P.ConcurrentModificationError$(this));
+        cell = cell.__js_helper$_next;
+      }
+    },
+    __js_helper$_addHashTableEntry$3: function(table, key, value) {
+      var cell;
+      H.assertSubtypeOfRuntimeType(key, H.getTypeArgumentByIndex(this, 0));
+      H.assertSubtypeOfRuntimeType(value, H.getTypeArgumentByIndex(this, 1));
+      cell = this._getTableCell$2(table, key);
+      if (cell == null)
+        this._setTableEntry$3(table, key, this.__js_helper$_newLinkedCell$2(key, value));
+      else
+        cell.hashMapCellValue = value;
+    },
+    _modified$0: function() {
+      this.__js_helper$_modifications = this.__js_helper$_modifications + 1 & 67108863;
+    },
+    __js_helper$_newLinkedCell$2: function(key, value) {
+      var cell, last;
+      cell = new H.LinkedHashMapCell(H.assertSubtypeOfRuntimeType(key, H.getTypeArgumentByIndex(this, 0)), H.assertSubtypeOfRuntimeType(value, H.getTypeArgumentByIndex(this, 1)));
+      if (this.__js_helper$_first == null) {
+        this.__js_helper$_last = cell;
+        this.__js_helper$_first = cell;
+      } else {
+        last = this.__js_helper$_last;
+        cell._previous = last;
+        last.__js_helper$_next = cell;
+        this.__js_helper$_last = cell;
+      }
+      ++this.__js_helper$_length;
+      this._modified$0();
+      return cell;
+    },
+    internalFindBucketIndex$2: function(bucket, key) {
+      var $length, i;
+      if (bucket == null)
+        return -1;
+      $length = bucket.length;
+      for (i = 0; i < $length; ++i)
+        if (J.$eq$(bucket[i].hashMapCellKey, key))
+          return i;
+      return -1;
+    },
+    toString$0: function(_) {
+      return P.MapBase_mapToString(this);
+    },
+    _getTableCell$2: function(table, key) {
+      return table[key];
+    },
+    _getTableBucket$2: function(table, key) {
+      return table[key];
+    },
+    _setTableEntry$3: function(table, key, value) {
+      table[key] = value;
+    },
+    _deleteTableEntry$2: function(table, key) {
+      delete table[key];
+    },
+    _newHashTable$0: function() {
+      var table = Object.create(null);
+      this._setTableEntry$3(table, "<non-identifier-key>", table);
+      this._deleteTableEntry$2(table, "<non-identifier-key>");
+      return table;
+    }
   };
-  H._AllMatchesIterator.prototype = {
+  H.LinkedHashMapCell.prototype = {};
+  H.LinkedHashMapKeyIterable.prototype = {
+    get$length: function(_) {
+      return this._map.__js_helper$_length;
+    },
+    get$iterator: function(_) {
+      var t1, t2;
+      t1 = this._map;
+      t2 = new H.LinkedHashMapKeyIterator(t1, t1.__js_helper$_modifications, this.$ti);
+      t2.__js_helper$_cell = t1.__js_helper$_first;
+      return t2;
+    }
+  };
+  H.LinkedHashMapKeyIterator.prototype = {
+    get$current: function() {
+      return this.__js_helper$_current;
+    },
     moveNext$0: function() {
-      var t1, t2, match, nextIndex;
-      t1 = this._string;
-      if (t1 == null)
-        return false;
-      t2 = this._nextIndex;
-      if (t2 <= t1.length) {
-        match = this._regExp._execGlobal$2(t1, t2);
-        if (match != null) {
-          this._current = match;
-          nextIndex = match.get$end();
-          this._nextIndex = match._match.index === nextIndex ? nextIndex + 1 : nextIndex;
+      var t1 = this._map;
+      if (this.__js_helper$_modifications !== t1.__js_helper$_modifications)
+        throw H.wrapException(P.ConcurrentModificationError$(t1));
+      else {
+        t1 = this.__js_helper$_cell;
+        if (t1 == null) {
+          this.set$__js_helper$_current(null);
+          return false;
+        } else {
+          this.set$__js_helper$_current(t1.hashMapCellKey);
+          this.__js_helper$_cell = this.__js_helper$_cell.__js_helper$_next;
           return true;
         }
       }
-      this._current = null;
-      this._string = null;
-      return false;
+    },
+    set$__js_helper$_current: function(_current) {
+      this.__js_helper$_current = H.assertSubtypeOfRuntimeType(_current, H.getTypeArgumentByIndex(this, 0));
+    },
+    $isIterator: 1
+  };
+  H.initHooks_closure.prototype = {
+    call$1: function(o) {
+      return this.getTag(o);
+    },
+    $signature: 0
+  };
+  H.initHooks_closure0.prototype = {
+    call$2: function(o, tag) {
+      return this.getUnknownTag(o, tag);
+    },
+    $signature: 4
+  };
+  H.initHooks_closure1.prototype = {
+    call$1: function(tag) {
+      return this.prototypeForTag(H.stringTypeCheck(tag));
+    },
+    $signature: 5
+  };
+  P._LinkedHashSet.prototype = {
+    get$iterator: function(_) {
+      var t1 = new P._LinkedHashSetIterator(this, this._modifications, this.$ti);
+      t1._cell = this._first;
+      return t1;
+    },
+    get$length: function(_) {
+      return this._collection$_length;
+    },
+    contains$1: function(_, object) {
+      var strings, t1;
+      if (typeof object === "string" && object !== "__proto__") {
+        strings = this._strings;
+        if (strings == null)
+          return false;
+        return H.interceptedTypeCheck(strings[object], "$is_LinkedHashSetCell") != null;
+      } else {
+        t1 = this._contains$1(object);
+        return t1;
+      }
+    },
+    _contains$1: function(object) {
+      var rest = this._rest;
+      if (rest == null)
+        return false;
+      return this._findBucketIndex$2(rest[this._computeHashCode$1(object)], object) >= 0;
+    },
+    add$1: function(_, element) {
+      var strings, nums;
+      H.assertSubtypeOfRuntimeType(element, H.getTypeArgumentByIndex(this, 0));
+      if (typeof element === "string" && element !== "__proto__") {
+        strings = this._strings;
+        if (strings == null) {
+          strings = P._LinkedHashSet__newHashTable();
+          this._strings = strings;
+        }
+        return this._addHashTableEntry$2(strings, element);
+      } else if (typeof element === "number" && (element & 1073741823) === element) {
+        nums = this._nums;
+        if (nums == null) {
+          nums = P._LinkedHashSet__newHashTable();
+          this._nums = nums;
+        }
+        return this._addHashTableEntry$2(nums, element);
+      } else
+        return this._add$1(element);
+    },
+    _add$1: function(element) {
+      var rest, hash, bucket;
+      H.assertSubtypeOfRuntimeType(element, H.getTypeArgumentByIndex(this, 0));
+      rest = this._rest;
+      if (rest == null) {
+        rest = P._LinkedHashSet__newHashTable();
+        this._rest = rest;
+      }
+      hash = this._computeHashCode$1(element);
+      bucket = rest[hash];
+      if (bucket == null)
+        rest[hash] = [this._newLinkedCell$1(element)];
+      else {
+        if (this._findBucketIndex$2(bucket, element) >= 0)
+          return false;
+        bucket.push(this._newLinkedCell$1(element));
+      }
+      return true;
+    },
+    _addHashTableEntry$2: function(table, element) {
+      H.assertSubtypeOfRuntimeType(element, H.getTypeArgumentByIndex(this, 0));
+      if (H.interceptedTypeCheck(table[element], "$is_LinkedHashSetCell") != null)
+        return false;
+      table[element] = this._newLinkedCell$1(element);
+      return true;
+    },
+    _newLinkedCell$1: function(element) {
+      var cell = new P._LinkedHashSetCell(H.assertSubtypeOfRuntimeType(element, H.getTypeArgumentByIndex(this, 0)));
+      if (this._first == null) {
+        this._last = cell;
+        this._first = cell;
+      } else {
+        this._last._next = cell;
+        this._last = cell;
+      }
+      ++this._collection$_length;
+      this._modifications = 1073741823 & this._modifications + 1;
+      return cell;
+    },
+    _computeHashCode$1: function(element) {
+      return J.get$hashCode$(element) & 1073741823;
+    },
+    _findBucketIndex$2: function(bucket, element) {
+      var $length, i;
+      if (bucket == null)
+        return -1;
+      $length = bucket.length;
+      for (i = 0; i < $length; ++i)
+        if (J.$eq$(bucket[i]._element, element))
+          return i;
+      return -1;
     }
   };
-  P.bool.prototype = {
+  P._LinkedHashSetCell.prototype = {};
+  P._LinkedHashSetIterator.prototype = {
+    get$current: function() {
+      return this._collection$_current;
+    },
+    moveNext$0: function() {
+      var t1 = this._set;
+      if (this._modifications !== t1._modifications)
+        throw H.wrapException(P.ConcurrentModificationError$(t1));
+      else {
+        t1 = this._cell;
+        if (t1 == null) {
+          this.set$_collection$_current(null);
+          return false;
+        } else {
+          this.set$_collection$_current(H.assertSubtypeOfRuntimeType(t1._element, H.getTypeArgumentByIndex(this, 0)));
+          this._cell = this._cell._next;
+          return true;
+        }
+      }
+    },
+    set$_collection$_current: function(_current) {
+      this._collection$_current = H.assertSubtypeOfRuntimeType(_current, H.getTypeArgumentByIndex(this, 0));
+    },
+    $isIterator: 1
+  };
+  P.ListBase.prototype = {$isIterable: 1, $isList: 1};
+  P.ListMixin.prototype = {
+    get$iterator: function(receiver) {
+      return new H.ListIterator(receiver, this.get$length(receiver), 0, [H.getRuntimeTypeArgumentIntercepted(this, receiver, "ListMixin", 0)]);
+    },
+    elementAt$1: function(receiver, index) {
+      return this.$index(receiver, index);
+    },
+    toString$0: function(receiver) {
+      return P.IterableBase_iterableToFullString(receiver, "[", "]");
+    }
+  };
+  P.MapBase.prototype = {};
+  P.MapBase_mapToString_closure.prototype = {
+    call$2: function(k, v) {
+      var t1, t2;
+      t1 = this._box_0;
+      if (!t1.first)
+        this.result._contents += ", ";
+      t1.first = false;
+      t1 = this.result;
+      t2 = t1._contents += H.S(k);
+      t1._contents = t2 + ": ";
+      t1._contents += H.S(v);
+    },
+    $signature: 6
+  };
+  P.MapMixin.prototype = {
+    forEach$1: function(_, action) {
+      var t1, key;
+      H.functionTypeCheck(action, {func: 1, ret: -1, args: [H.getRuntimeTypeArgument(this, "MapMixin", 0), H.getRuntimeTypeArgument(this, "MapMixin", 1)]});
+      for (t1 = J.get$iterator$ax(this.get$keys()); t1.moveNext$0();) {
+        key = t1.get$current();
+        action.call$2(key, this.$index(0, key));
+      }
+    },
+    get$length: function(_) {
+      return J.get$length$asx(this.get$keys());
+    },
     toString$0: function(_) {
-      return this ? "true" : "false";
-    }
+      return P.MapBase_mapToString(this);
+    },
+    $isMap: 1
   };
+  P._SetBase.prototype = {
+    addAll$1: function(_, elements) {
+      var t1;
+      for (t1 = J.get$iterator$ax(H.assertSubtype(elements, "$isIterable", this.$ti, "$asIterable")); t1.moveNext$0();)
+        this.add$1(0, t1.get$current());
+    },
+    toString$0: function(_) {
+      return P.IterableBase_iterableToFullString(this, "{", "}");
+    },
+    $isIterable: 1,
+    $isSet: 1
+  };
+  P._ListBase_Object_ListMixin.prototype = {};
+  P.bool.prototype = {};
   P.double.prototype = {};
   P.Error.prototype = {};
   P.NullThrownError.prototype = {
@@ -1282,7 +3039,7 @@
       t1 = this.length;
       if (t1 === 0)
         return ": no indices are valid";
-      return ": index should be less than " + t1;
+      return ": index should be less than " + H.S(t1);
     },
     get$length: function(receiver) {
       return this.length;
@@ -1293,6 +3050,17 @@
       return "Unsupported operation: " + this.message;
     }
   };
+  P.UnimplementedError.prototype = {
+    toString$0: function(_) {
+      var t1 = this.message;
+      return t1 != null ? "UnimplementedError: " + t1 : "UnimplementedError";
+    }
+  };
+  P.StateError.prototype = {
+    toString$0: function(_) {
+      return "Bad state: " + this.message;
+    }
+  };
   P.ConcurrentModificationError.prototype = {
     toString$0: function(_) {
       var t1 = this.modifiedObject;
@@ -1301,31 +3069,54 @@
       return "Concurrent modification during iteration: " + P.Error_safeToString(t1) + ".";
     }
   };
+  P.StackOverflowError.prototype = {
+    toString$0: function(_) {
+      return "Stack Overflow";
+    },
+    $isError: 1
+  };
   P.CyclicInitializationError.prototype = {
     toString$0: function(_) {
       var t1 = this.variableName;
       return t1 == null ? "Reading static variable during its initialization" : "Reading static variable '" + t1 + "' during its initialization";
     }
   };
-  P.FormatException.prototype = {
+  P.Function.prototype = {};
+  P.int.prototype = {};
+  P.Iterable.prototype = {
+    where$1: function(_, test) {
+      var t1 = H.getRuntimeTypeArgument(this, "Iterable", 0);
+      return new H.WhereIterable(this, H.functionTypeCheck(test, {func: 1, ret: P.bool, args: [t1]}), [t1]);
+    },
+    get$length: function(_) {
+      var it, count;
+      it = this.get$iterator(this);
+      for (count = 0; it.moveNext$0();)
+        ++count;
+      return count;
+    },
     toString$0: function(_) {
-      var t1, report, objectSource, source;
-      t1 = this.message;
-      report = "" !== t1 ? "FormatException: " + t1 : "FormatException";
-      objectSource = this.source;
-      source = objectSource.length > 78 ? C.JSString_methods.substring$2(objectSource, 0, 75) + "..." : objectSource;
-      return report + "\n" + source;
+      return P.IterableBase_iterableToShortString(this, "(", ")");
     }
   };
-  P.int.prototype = {};
+  P.Iterator.prototype = {};
   P.List.prototype = {$isIterable: 1};
   P.Null.prototype = {
+    get$hashCode: function(_) {
+      return P.Object.prototype.get$hashCode.call(this, this);
+    },
     toString$0: function(_) {
       return "null";
     }
   };
   P.num.prototype = {};
   P.Object.prototype = {constructor: P.Object, $isObject: 1,
+    $eq: function(_, other) {
+      return this === other;
+    },
+    get$hashCode: function(_) {
+      return H.Primitives_objectHashCode(this);
+    },
     toString$0: function(_) {
       return "Instance of '" + H.Primitives_objectTypeName(this) + "'";
     },
@@ -1343,37 +3134,1017 @@
       return t1.charCodeAt(0) == 0 ? t1 : t1;
     }
   };
+  W.HtmlElement.prototype = {};
+  W.AnchorElement.prototype = {
+    toString$0: function(receiver) {
+      return String(receiver);
+    },
+    $isAnchorElement: 1
+  };
+  W.AreaElement.prototype = {
+    toString$0: function(receiver) {
+      return String(receiver);
+    }
+  };
+  W.BaseElement.prototype = {$isBaseElement: 1};
+  W.BodyElement.prototype = {$isBodyElement: 1};
+  W.CharacterData.prototype = {
+    get$length: function(receiver) {
+      return receiver.length;
+    }
+  };
+  W.DomException.prototype = {
+    toString$0: function(receiver) {
+      return String(receiver);
+    }
+  };
+  W.Element.prototype = {
+    get$attributes: function(receiver) {
+      return new W._ElementAttributeMap(receiver);
+    },
+    toString$0: function(receiver) {
+      return receiver.localName;
+    },
+    createFragment$3$treeSanitizer$validator: function(receiver, html, treeSanitizer, validator) {
+      var t1, t2, contextElement, fragment;
+      if (treeSanitizer == null) {
+        t1 = $.Element__defaultValidator;
+        if (t1 == null) {
+          t1 = H.setRuntimeTypeInfo([], [W.NodeValidator]);
+          t2 = new W.NodeValidatorBuilder(t1);
+          C.JSArray_methods.add$1(t1, W._Html5NodeValidator$(null));
+          C.JSArray_methods.add$1(t1, W._TemplatingNodeValidator$());
+          $.Element__defaultValidator = t2;
+          validator = t2;
+        } else
+          validator = t1;
+        t1 = $.Element__defaultSanitizer;
+        if (t1 == null) {
+          t1 = new W._ValidatingTreeSanitizer(validator);
+          $.Element__defaultSanitizer = t1;
+          treeSanitizer = t1;
+        } else {
+          t1.validator = validator;
+          treeSanitizer = t1;
+        }
+      }
+      if ($.Element__parseDocument == null) {
+        t1 = document;
+        t2 = t1.implementation.createHTMLDocument("");
+        $.Element__parseDocument = t2;
+        $.Element__parseRange = t2.createRange();
+        t2 = $.Element__parseDocument.createElement("base");
+        H.interceptedTypeCheck(t2, "$isBaseElement");
+        t2.href = t1.baseURI;
+        $.Element__parseDocument.head.appendChild(t2);
+      }
+      t1 = $.Element__parseDocument;
+      if (t1.body == null) {
+        t2 = t1.createElement("body");
+        t1.body = H.interceptedTypeCheck(t2, "$isBodyElement");
+      }
+      t1 = $.Element__parseDocument;
+      if (!!this.$isBodyElement)
+        contextElement = t1.body;
+      else {
+        contextElement = t1.createElement(receiver.tagName);
+        $.Element__parseDocument.body.appendChild(contextElement);
+      }
+      if ("createContextualFragment" in window.Range.prototype && !C.JSArray_methods.contains$1(C.List_ego, receiver.tagName)) {
+        $.Element__parseRange.selectNodeContents(contextElement);
+        fragment = $.Element__parseRange.createContextualFragment(html);
+      } else {
+        contextElement.innerHTML = html;
+        fragment = $.Element__parseDocument.createDocumentFragment();
+        for (; t1 = contextElement.firstChild, t1 != null;)
+          fragment.appendChild(t1);
+      }
+      t1 = $.Element__parseDocument.body;
+      if (contextElement == null ? t1 != null : contextElement !== t1)
+        J.remove$0$x(contextElement);
+      treeSanitizer.sanitizeTree$1(fragment);
+      document.adoptNode(fragment);
+      return fragment;
+    },
+    createFragment$2$treeSanitizer: function($receiver, html, treeSanitizer) {
+      return this.createFragment$3$treeSanitizer$validator($receiver, html, treeSanitizer, null);
+    },
+    set$innerHtml: function(receiver, html) {
+      this.setInnerHtml$1(receiver, html);
+    },
+    setInnerHtml$1: function(receiver, html) {
+      receiver.textContent = null;
+      receiver.appendChild(this.createFragment$3$treeSanitizer$validator(receiver, html, null, null));
+    },
+    $isElement: 1,
+    get$tagName: function(receiver) {
+      return receiver.tagName;
+    }
+  };
+  W.Element_Element$html_closure.prototype = {
+    call$1: function(e) {
+      return !!J.getInterceptor$(H.interceptedTypeCheck(e, "$isNode")).$isElement;
+    },
+    $signature: 7
+  };
+  W.EventTarget.prototype = {};
+  W.FormElement.prototype = {
+    get$length: function(receiver) {
+      return receiver.length;
+    }
+  };
+  W.Location.prototype = {
+    toString$0: function(receiver) {
+      return String(receiver);
+    },
+    $isLocation: 1
+  };
+  W._ChildNodeListLazy.prototype = {
+    get$single: function(_) {
+      var t1, l;
+      t1 = this._this;
+      l = t1.childNodes.length;
+      if (l === 0)
+        throw H.wrapException(P.StateError$("No elements"));
+      if (l > 1)
+        throw H.wrapException(P.StateError$("More than one element"));
+      return t1.firstChild;
+    },
+    addAll$1: function(_, iterable) {
+      var t1, t2, len, i;
+      H.assertSubtype(iterable, "$isIterable", [W.Node], "$asIterable");
+      t1 = iterable._this;
+      t2 = this._this;
+      if (t1 !== t2)
+        for (len = t1.childNodes.length, i = 0; i < len; ++i)
+          t2.appendChild(t1.firstChild);
+      return;
+    },
+    get$iterator: function(_) {
+      var t1 = this._this.childNodes;
+      return new W.FixedSizeListIterator(t1, t1.length, -1, [H.getRuntimeTypeArgumentIntercepted(C.NodeList_methods, t1, "ImmutableListMixin", 0)]);
+    },
+    get$length: function(_) {
+      return this._this.childNodes.length;
+    },
+    $index: function(_, index) {
+      var t1 = this._this.childNodes;
+      if (index < 0 || index >= t1.length)
+        return H.ioore(t1, index);
+      return t1[index];
+    },
+    $asListMixin: function() {
+      return [W.Node];
+    },
+    $asIterable: function() {
+      return [W.Node];
+    },
+    $asList: function() {
+      return [W.Node];
+    }
+  };
+  W.Node.prototype = {
+    remove$0: function(receiver) {
+      var t1 = receiver.parentNode;
+      if (t1 != null)
+        t1.removeChild(receiver);
+    },
+    toString$0: function(receiver) {
+      var value = receiver.nodeValue;
+      return value == null ? this.super$Interceptor$toString(receiver) : value;
+    },
+    $isNode: 1
+  };
+  W.NodeList.prototype = {
+    get$length: function(receiver) {
+      return receiver.length;
+    },
+    $index: function(receiver, index) {
+      if (index >>> 0 !== index || index >= receiver.length)
+        throw H.wrapException(P.IndexError$(index, receiver, null, null, null));
+      return receiver[index];
+    },
+    elementAt$1: function(receiver, index) {
+      if (index >= receiver.length)
+        return H.ioore(receiver, index);
+      return receiver[index];
+    },
+    $isJavaScriptIndexingBehavior: 1,
+    $asJavaScriptIndexingBehavior: function() {
+      return [W.Node];
+    },
+    $asListMixin: function() {
+      return [W.Node];
+    },
+    $isIterable: 1,
+    $asIterable: function() {
+      return [W.Node];
+    },
+    $isList: 1,
+    $asList: function() {
+      return [W.Node];
+    },
+    $asImmutableListMixin: function() {
+      return [W.Node];
+    }
+  };
+  W.SelectElement.prototype = {
+    get$length: function(receiver) {
+      return receiver.length;
+    }
+  };
+  W.TableElement.prototype = {
+    createFragment$3$treeSanitizer$validator: function(receiver, html, treeSanitizer, validator) {
+      var table, fragment;
+      if ("createContextualFragment" in window.Range.prototype)
+        return this.super$Element$createFragment(receiver, html, treeSanitizer, validator);
+      table = W.Element_Element$html("<table>" + html + "</table>", treeSanitizer, validator);
+      fragment = document.createDocumentFragment();
+      fragment.toString;
+      table.toString;
+      new W._ChildNodeListLazy(fragment).addAll$1(0, new W._ChildNodeListLazy(table));
+      return fragment;
+    }
+  };
+  W.TableRowElement.prototype = {
+    createFragment$3$treeSanitizer$validator: function(receiver, html, treeSanitizer, validator) {
+      var t1, fragment, section, row;
+      if ("createContextualFragment" in window.Range.prototype)
+        return this.super$Element$createFragment(receiver, html, treeSanitizer, validator);
+      t1 = document;
+      fragment = t1.createDocumentFragment();
+      t1 = C.TableElement_methods.createFragment$3$treeSanitizer$validator(t1.createElement("table"), html, treeSanitizer, validator);
+      t1.toString;
+      t1 = new W._ChildNodeListLazy(t1);
+      section = t1.get$single(t1);
+      section.toString;
+      t1 = new W._ChildNodeListLazy(section);
+      row = t1.get$single(t1);
+      fragment.toString;
+      row.toString;
+      new W._ChildNodeListLazy(fragment).addAll$1(0, new W._ChildNodeListLazy(row));
+      return fragment;
+    }
+  };
+  W.TableSectionElement.prototype = {
+    createFragment$3$treeSanitizer$validator: function(receiver, html, treeSanitizer, validator) {
+      var t1, fragment, section;
+      if ("createContextualFragment" in window.Range.prototype)
+        return this.super$Element$createFragment(receiver, html, treeSanitizer, validator);
+      t1 = document;
+      fragment = t1.createDocumentFragment();
+      t1 = C.TableElement_methods.createFragment$3$treeSanitizer$validator(t1.createElement("table"), html, treeSanitizer, validator);
+      t1.toString;
+      t1 = new W._ChildNodeListLazy(t1);
+      section = t1.get$single(t1);
+      fragment.toString;
+      section.toString;
+      new W._ChildNodeListLazy(fragment).addAll$1(0, new W._ChildNodeListLazy(section));
+      return fragment;
+    }
+  };
+  W.TemplateElement.prototype = {
+    setInnerHtml$1: function(receiver, html) {
+      var fragment;
+      receiver.textContent = null;
+      fragment = this.createFragment$3$treeSanitizer$validator(receiver, html, null, null);
+      receiver.content.appendChild(fragment);
+    },
+    $isTemplateElement: 1
+  };
+  W._Attr.prototype = {$is_Attr: 1};
+  W._NamedNodeMap.prototype = {
+    get$length: function(receiver) {
+      return receiver.length;
+    },
+    $index: function(receiver, index) {
+      if (index >>> 0 !== index || index >= receiver.length)
+        throw H.wrapException(P.IndexError$(index, receiver, null, null, null));
+      return receiver[index];
+    },
+    elementAt$1: function(receiver, index) {
+      if (index >= receiver.length)
+        return H.ioore(receiver, index);
+      return receiver[index];
+    },
+    $isJavaScriptIndexingBehavior: 1,
+    $asJavaScriptIndexingBehavior: function() {
+      return [W.Node];
+    },
+    $asListMixin: function() {
+      return [W.Node];
+    },
+    $isIterable: 1,
+    $asIterable: function() {
+      return [W.Node];
+    },
+    $isList: 1,
+    $asList: function() {
+      return [W.Node];
+    },
+    $asImmutableListMixin: function() {
+      return [W.Node];
+    }
+  };
+  W._AttributeMap.prototype = {
+    forEach$1: function(_, f) {
+      var t1, t2, t3, _i, key;
+      H.functionTypeCheck(f, {func: 1, ret: -1, args: [P.String, P.String]});
+      for (t1 = this.get$keys(), t2 = t1.length, t3 = this._html$_element, _i = 0; _i < t1.length; t1.length === t2 || (0, H.throwConcurrentModificationError)(t1), ++_i) {
+        key = t1[_i];
+        f.call$2(key, t3.getAttribute(key));
+      }
+    },
+    get$keys: function() {
+      var attributes, keys, len, i, attr;
+      attributes = this._html$_element.attributes;
+      keys = H.setRuntimeTypeInfo([], [P.String]);
+      for (len = attributes.length, i = 0; i < len; ++i) {
+        if (i >= attributes.length)
+          return H.ioore(attributes, i);
+        attr = H.interceptedTypeCheck(attributes[i], "$is_Attr");
+        if (attr.namespaceURI == null)
+          C.JSArray_methods.add$1(keys, attr.name);
+      }
+      return keys;
+    },
+    $asMapMixin: function() {
+      return [P.String, P.String];
+    },
+    $asMap: function() {
+      return [P.String, P.String];
+    }
+  };
+  W._ElementAttributeMap.prototype = {
+    $index: function(_, key) {
+      return this._html$_element.getAttribute(H.stringTypeCheck(key));
+    },
+    get$length: function(_) {
+      return this.get$keys().length;
+    }
+  };
+  W._Html5NodeValidator.prototype = {
+    _Html5NodeValidator$1$uriPolicy: function(uriPolicy) {
+      var t1, _i;
+      t1 = $.$get$_Html5NodeValidator__attributeValidators();
+      if (t1.__js_helper$_length === 0) {
+        for (_i = 0; _i < 262; ++_i)
+          t1.$indexSet(0, C.List_2Zi[_i], W.html__Html5NodeValidator__standardAttributeValidator$closure());
+        for (_i = 0; _i < 12; ++_i)
+          t1.$indexSet(0, C.List_yrN[_i], W.html__Html5NodeValidator__uriAttributeValidator$closure());
+      }
+    },
+    allowsElement$1: function(element) {
+      return $.$get$_Html5NodeValidator__allowedElements().contains$1(0, W.Element__safeTagName(element));
+    },
+    allowsAttribute$3: function(element, attributeName, value) {
+      var tagName, t1, validator;
+      tagName = W.Element__safeTagName(element);
+      t1 = $.$get$_Html5NodeValidator__attributeValidators();
+      validator = t1.$index(0, H.S(tagName) + "::" + attributeName);
+      if (validator == null)
+        validator = t1.$index(0, "*::" + attributeName);
+      if (validator == null)
+        return false;
+      return H.boolTypeCheck(validator.call$4(element, attributeName, value, this));
+    },
+    $isNodeValidator: 1
+  };
+  W.ImmutableListMixin.prototype = {
+    get$iterator: function(receiver) {
+      return new W.FixedSizeListIterator(receiver, this.get$length(receiver), -1, [H.getRuntimeTypeArgumentIntercepted(this, receiver, "ImmutableListMixin", 0)]);
+    }
+  };
+  W.NodeValidatorBuilder.prototype = {
+    allowsElement$1: function(element) {
+      return C.JSArray_methods.any$1(this._validators, new W.NodeValidatorBuilder_allowsElement_closure(element));
+    },
+    allowsAttribute$3: function(element, attributeName, value) {
+      return C.JSArray_methods.any$1(this._validators, new W.NodeValidatorBuilder_allowsAttribute_closure(element, attributeName, value));
+    },
+    $isNodeValidator: 1
+  };
+  W.NodeValidatorBuilder_allowsElement_closure.prototype = {
+    call$1: function(v) {
+      return H.interceptedTypeCheck(v, "$isNodeValidator").allowsElement$1(this.element);
+    },
+    $signature: 1
+  };
+  W.NodeValidatorBuilder_allowsAttribute_closure.prototype = {
+    call$1: function(v) {
+      return H.interceptedTypeCheck(v, "$isNodeValidator").allowsAttribute$3(this.element, this.attributeName, this.value);
+    },
+    $signature: 1
+  };
+  W._SimpleNodeValidator.prototype = {
+    _SimpleNodeValidator$4$allowedAttributes$allowedElements$allowedUriAttributes: function(uriPolicy, allowedAttributes, allowedElements, allowedUriAttributes) {
+      var legalAttributes, extraUriAttributes, t1;
+      this.allowedElements.addAll$1(0, allowedElements);
+      legalAttributes = allowedAttributes.where$1(0, new W._SimpleNodeValidator_closure());
+      extraUriAttributes = allowedAttributes.where$1(0, new W._SimpleNodeValidator_closure0());
+      this.allowedAttributes.addAll$1(0, legalAttributes);
+      t1 = this.allowedUriAttributes;
+      t1.addAll$1(0, C.List_empty);
+      t1.addAll$1(0, extraUriAttributes);
+    },
+    allowsElement$1: function(element) {
+      return this.allowedElements.contains$1(0, W.Element__safeTagName(element));
+    },
+    allowsAttribute$3: function(element, attributeName, value) {
+      var tagName, t1;
+      tagName = W.Element__safeTagName(element);
+      t1 = this.allowedUriAttributes;
+      if (t1.contains$1(0, H.S(tagName) + "::" + attributeName))
+        return this.uriPolicy.allowsUri$1(value);
+      else if (t1.contains$1(0, "*::" + attributeName))
+        return this.uriPolicy.allowsUri$1(value);
+      else {
+        t1 = this.allowedAttributes;
+        if (t1.contains$1(0, H.S(tagName) + "::" + attributeName))
+          return true;
+        else if (t1.contains$1(0, "*::" + attributeName))
+          return true;
+        else if (t1.contains$1(0, H.S(tagName) + "::*"))
+          return true;
+        else if (t1.contains$1(0, "*::*"))
+          return true;
+      }
+      return false;
+    },
+    $isNodeValidator: 1
+  };
+  W._SimpleNodeValidator_closure.prototype = {
+    call$1: function(x) {
+      return !C.JSArray_methods.contains$1(C.List_yrN, H.stringTypeCheck(x));
+    },
+    $signature: 2
+  };
+  W._SimpleNodeValidator_closure0.prototype = {
+    call$1: function(x) {
+      return C.JSArray_methods.contains$1(C.List_yrN, H.stringTypeCheck(x));
+    },
+    $signature: 2
+  };
+  W._TemplatingNodeValidator.prototype = {
+    allowsAttribute$3: function(element, attributeName, value) {
+      if (this.super$_SimpleNodeValidator$allowsAttribute(element, attributeName, value))
+        return true;
+      if (attributeName === "template" && value === "")
+        return true;
+      if (element.getAttribute("template") === "")
+        return this._templateAttrs.contains$1(0, attributeName);
+      return false;
+    }
+  };
+  W._TemplatingNodeValidator_closure.prototype = {
+    call$1: function(attr) {
+      return "TEMPLATE::" + H.S(H.stringTypeCheck(attr));
+    },
+    $signature: 8
+  };
+  W._SvgNodeValidator.prototype = {
+    allowsElement$1: function(element) {
+      var t1 = J.getInterceptor$(element);
+      if (!!t1.$isScriptElement)
+        return false;
+      t1 = !!t1.$isSvgElement;
+      if (t1 && W.Element__safeTagName(element) === "foreignObject")
+        return false;
+      if (t1)
+        return true;
+      return false;
+    },
+    allowsAttribute$3: function(element, attributeName, value) {
+      if (attributeName === "is" || C.JSString_methods.startsWith$1(attributeName, "on"))
+        return false;
+      return this.allowsElement$1(element);
+    },
+    $isNodeValidator: 1
+  };
+  W.FixedSizeListIterator.prototype = {
+    moveNext$0: function() {
+      var nextPosition, t1;
+      nextPosition = this._position + 1;
+      t1 = this._length;
+      if (nextPosition < t1) {
+        this.set$_current(J.$index$asx(this._array, nextPosition));
+        this._position = nextPosition;
+        return true;
+      }
+      this.set$_current(null);
+      this._position = t1;
+      return false;
+    },
+    get$current: function() {
+      return this._current;
+    },
+    set$_current: function(_current) {
+      this._current = H.assertSubtypeOfRuntimeType(_current, H.getTypeArgumentByIndex(this, 0));
+    },
+    $isIterator: 1
+  };
+  W.NodeValidator.prototype = {};
+  W._SameOriginUriPolicy.prototype = {$isUriPolicy: 1};
+  W._ValidatingTreeSanitizer.prototype = {
+    sanitizeTree$1: function(node) {
+      new W._ValidatingTreeSanitizer_sanitizeTree_walk(this).call$2(node, null);
+    },
+    _removeNode$2: function(node, $parent) {
+      if ($parent == null)
+        J.remove$0$x(node);
+      else
+        $parent.removeChild(node);
+    },
+    _sanitizeUntrustedElement$2: function(element, $parent) {
+      var corrupted, attrs, isAttr, corruptedTest1, elementText, elementTagName, exception, t1;
+      corrupted = true;
+      attrs = null;
+      isAttr = null;
+      try {
+        attrs = J.get$attributes$x(element);
+        isAttr = attrs._html$_element.getAttribute("is");
+        corruptedTest1 = function(element) {
+          if (!(element.attributes instanceof NamedNodeMap))
+            return true;
+          var childNodes = element.childNodes;
+          if (element.lastChild && element.lastChild !== childNodes[childNodes.length - 1])
+            return true;
+          if (element.children)
+            if (!(element.children instanceof HTMLCollection || element.children instanceof NodeList))
+              return true;
+          var length = 0;
+          if (element.children)
+            length = element.children.length;
+          for (var i = 0; i < length; i++) {
+            var child = element.children[i];
+            if (child.id == 'attributes' || child.name == 'attributes' || child.id == 'lastChild' || child.name == 'lastChild' || child.id == 'children' || child.name == 'children')
+              return true;
+          }
+          return false;
+        }(element);
+        corrupted = corruptedTest1 ? true : !(element.attributes instanceof NamedNodeMap);
+      } catch (exception) {
+        H.unwrapException(exception);
+      }
+      elementText = "element unprintable";
+      try {
+        elementText = J.toString$0$(element);
+      } catch (exception) {
+        H.unwrapException(exception);
+      }
+      try {
+        elementTagName = W.Element__safeTagName(element);
+        this._sanitizeElement$7(H.interceptedTypeCheck(element, "$isElement"), $parent, corrupted, elementText, elementTagName, H.interceptedTypeCheck(attrs, "$isMap"), H.stringTypeCheck(isAttr));
+      } catch (exception) {
+        if (H.unwrapException(exception) instanceof P.ArgumentError)
+          throw exception;
+        else {
+          this._removeNode$2(element, $parent);
+          window;
+          t1 = "Removing corrupted element " + H.S(elementText);
+          if (typeof console != "undefined")
+            window.console.warn(t1);
+        }
+      }
+    },
+    _sanitizeElement$7: function(element, $parent, corrupted, text, tag, attrs, isAttr) {
+      var t1, keys, i, $name, t2;
+      if (corrupted) {
+        this._removeNode$2(element, $parent);
+        window;
+        t1 = "Removing element due to corrupted attributes on <" + text + ">";
+        if (typeof console != "undefined")
+          window.console.warn(t1);
+        return;
+      }
+      if (!this.validator.allowsElement$1(element)) {
+        this._removeNode$2(element, $parent);
+        window;
+        t1 = "Removing disallowed element <" + H.S(tag) + "> from " + H.S($parent);
+        if (typeof console != "undefined")
+          window.console.warn(t1);
+        return;
+      }
+      if (isAttr != null)
+        if (!this.validator.allowsAttribute$3(element, "is", isAttr)) {
+          this._removeNode$2(element, $parent);
+          window;
+          t1 = "Removing disallowed type extension <" + H.S(tag) + ' is="' + isAttr + '">';
+          if (typeof console != "undefined")
+            window.console.warn(t1);
+          return;
+        }
+      t1 = attrs.get$keys();
+      keys = H.setRuntimeTypeInfo(t1.slice(0), [H.getTypeArgumentByIndex(t1, 0)]);
+      for (i = attrs.get$keys().length - 1, t1 = attrs._html$_element; i >= 0; --i) {
+        if (i >= keys.length)
+          return H.ioore(keys, i);
+        $name = keys[i];
+        if (!this.validator.allowsAttribute$3(element, J.toLowerCase$0$s($name), t1.getAttribute($name))) {
+          window;
+          t2 = "Removing disallowed attribute <" + H.S(tag) + " " + $name + '="' + H.S(t1.getAttribute($name)) + '">';
+          if (typeof console != "undefined")
+            window.console.warn(t2);
+          t1.removeAttribute($name);
+        }
+      }
+      if (!!J.getInterceptor$(element).$isTemplateElement)
+        this.sanitizeTree$1(element.content);
+    },
+    $isNodeTreeSanitizer: 1
+  };
+  W._ValidatingTreeSanitizer_sanitizeTree_walk.prototype = {
+    call$2: function(node, $parent) {
+      var child, nextChild, t1, exception, t2, t3;
+      t1 = this.$this;
+      switch (node.nodeType) {
+        case 1:
+          t1._sanitizeUntrustedElement$2(node, $parent);
+          break;
+        case 8:
+        case 11:
+        case 3:
+        case 4:
+          break;
+        default:
+          t1._removeNode$2(node, $parent);
+      }
+      child = node.lastChild;
+      for (t1 = node == null; null != child;) {
+        nextChild = null;
+        try {
+          nextChild = child.previousSibling;
+        } catch (exception) {
+          H.unwrapException(exception);
+          t2 = H.interceptedTypeCheck(child, "$isNode");
+          if (t1) {
+            t3 = t2.parentNode;
+            if (t3 != null)
+              t3.removeChild(t2);
+          } else
+            node.removeChild(t2);
+          child = null;
+          nextChild = node.lastChild;
+        }
+        if (child != null)
+          this.call$2(child, node);
+        child = H.interceptedTypeCheck(nextChild, "$isNode");
+      }
+    },
+    $signature: 9
+  };
+  W._NodeList_Interceptor_ListMixin.prototype = {};
+  W._NodeList_Interceptor_ListMixin_ImmutableListMixin.prototype = {};
+  W.__NamedNodeMap_Interceptor_ListMixin.prototype = {};
+  W.__NamedNodeMap_Interceptor_ListMixin_ImmutableListMixin.prototype = {};
+  P.ScriptElement.prototype = {$isScriptElement: 1};
+  P.SvgElement.prototype = {
+    set$innerHtml: function(receiver, value) {
+      this.setInnerHtml$1(receiver, value);
+    },
+    createFragment$3$treeSanitizer$validator: function(receiver, svg, treeSanitizer, validator) {
+      var t1, html, t2, fragment, svgFragment, root;
+      t1 = H.setRuntimeTypeInfo([], [W.NodeValidator]);
+      C.JSArray_methods.add$1(t1, W._Html5NodeValidator$(null));
+      C.JSArray_methods.add$1(t1, W._TemplatingNodeValidator$());
+      C.JSArray_methods.add$1(t1, new W._SvgNodeValidator());
+      treeSanitizer = new W._ValidatingTreeSanitizer(new W.NodeValidatorBuilder(t1));
+      html = '<svg version="1.1">' + svg + "</svg>";
+      t1 = document;
+      t2 = t1.body;
+      fragment = (t2 && C.BodyElement_methods).createFragment$2$treeSanitizer(t2, html, treeSanitizer);
+      svgFragment = t1.createDocumentFragment();
+      fragment.toString;
+      t1 = new W._ChildNodeListLazy(fragment);
+      root = t1.get$single(t1);
+      for (; t1 = root.firstChild, t1 != null;)
+        svgFragment.appendChild(t1);
+      return svgFragment;
+    },
+    $isSvgElement: 1
+  };
+  (function aliases() {
+    var _ = J.Interceptor.prototype;
+    _.super$Interceptor$toString = _.toString$0;
+    _ = J.JavaScriptObject.prototype;
+    _.super$JavaScriptObject$toString = _.toString$0;
+    _ = P.Iterable.prototype;
+    _.super$Iterable$where = _.where$1;
+    _ = W.Element.prototype;
+    _.super$Element$createFragment = _.createFragment$3$treeSanitizer$validator;
+    _ = W._SimpleNodeValidator.prototype;
+    _.super$_SimpleNodeValidator$allowsAttribute = _.allowsAttribute$3;
+  })();
+  (function installTearOffs() {
+    var _static = hunkHelpers.installStaticTearOff;
+    _static(W, "html__Html5NodeValidator__standardAttributeValidator$closure", 4, null, ["call$4"], ["_Html5NodeValidator__standardAttributeValidator"], 3, 0);
+    _static(W, "html__Html5NodeValidator__uriAttributeValidator$closure", 4, null, ["call$4"], ["_Html5NodeValidator__uriAttributeValidator"], 3, 0);
+  })();
   (function inheritance() {
-    var _inherit = hunkHelpers.inherit,
+    var _mixin = hunkHelpers.mixin,
+      _inherit = hunkHelpers.inherit,
       _inheritMany = hunkHelpers.inheritMany;
     _inherit(P.Object, null);
-    _inheritMany(P.Object, [H.JS_CONST, J.Interceptor, J.ArrayIterator, H.Closure, P.Error, H.JSSyntaxRegExp, H._MatchImplementation, H._AllMatchesIterator, P.bool, P.num, P.FormatException, P.List, P.Null, P.String, P.StringBuffer]);
-    _inheritMany(J.Interceptor, [J.JSBool, J.JSNull, J.JSArray, J.JSNumber, J.JSString]);
+    _inheritMany(P.Object, [H.JS_CONST, J.Interceptor, J.ArrayIterator, P.Iterable, H.ListIterator, P.Iterator, H.TypeErrorDecoder, P.Error, H.Closure, P.MapMixin, H.LinkedHashMapCell, H.LinkedHashMapKeyIterator, P._SetBase, P._LinkedHashSetCell, P._LinkedHashSetIterator, P._ListBase_Object_ListMixin, P.ListMixin, P.bool, P.num, P.StackOverflowError, P.Function, P.List, P.Null, P.String, P.StringBuffer, W._Html5NodeValidator, W.ImmutableListMixin, W.NodeValidatorBuilder, W._SimpleNodeValidator, W._SvgNodeValidator, W.FixedSizeListIterator, W.NodeValidator, W._SameOriginUriPolicy, W._ValidatingTreeSanitizer]);
+    _inheritMany(J.Interceptor, [J.JSBool, J.JSNull, J.JavaScriptObject, J.JSArray, J.JSNumber, J.JSString, W.EventTarget, W.DomException, W.Location, W._NodeList_Interceptor_ListMixin, W.__NamedNodeMap_Interceptor_ListMixin]);
+    _inheritMany(J.JavaScriptObject, [J.PlainJavaScriptObject, J.UnknownJavaScriptObject, J.JavaScriptFunction]);
     _inherit(J.JSUnmodifiableArray, J.JSArray);
     _inheritMany(J.JSNumber, [J.JSInt, J.JSDouble]);
-    _inheritMany(P.Error, [H.TypeErrorImplementation, P.NullThrownError, P.ArgumentError, P.UnsupportedError, P.ConcurrentModificationError, P.CyclicInitializationError]);
+    _inheritMany(P.Iterable, [H.EfficientLengthIterable, H.WhereIterable]);
+    _inheritMany(H.EfficientLengthIterable, [H.ListIterable, H.LinkedHashMapKeyIterable]);
+    _inherit(H.MappedListIterable, H.ListIterable);
+    _inherit(H.WhereIterator, P.Iterator);
+    _inheritMany(P.Error, [H.NullError, H.JsNoSuchMethodError, H.UnknownJsTypeError, H.TypeErrorImplementation, H.RuntimeError, P.NullThrownError, P.ArgumentError, P.UnsupportedError, P.UnimplementedError, P.StateError, P.ConcurrentModificationError, P.CyclicInitializationError]);
+    _inheritMany(H.Closure, [H.unwrapException_saveStackTrace, H.TearOffClosure, H.initHooks_closure, H.initHooks_closure0, H.initHooks_closure1, P.MapBase_mapToString_closure, W.Element_Element$html_closure, W.NodeValidatorBuilder_allowsElement_closure, W.NodeValidatorBuilder_allowsAttribute_closure, W._SimpleNodeValidator_closure, W._SimpleNodeValidator_closure0, W._TemplatingNodeValidator_closure, W._ValidatingTreeSanitizer_sanitizeTree_walk]);
+    _inheritMany(H.TearOffClosure, [H.StaticClosure, H.BoundClosure]);
+    _inherit(P.MapBase, P.MapMixin);
+    _inheritMany(P.MapBase, [H.JsLinkedHashMap, W._AttributeMap]);
+    _inherit(P._LinkedHashSet, P._SetBase);
+    _inherit(P.ListBase, P._ListBase_Object_ListMixin);
     _inheritMany(P.num, [P.double, P.int]);
     _inheritMany(P.ArgumentError, [P.RangeError, P.IndexError]);
+    _inherit(W.Node, W.EventTarget);
+    _inheritMany(W.Node, [W.Element, W.CharacterData, W._Attr]);
+    _inheritMany(W.Element, [W.HtmlElement, P.SvgElement]);
+    _inheritMany(W.HtmlElement, [W.AnchorElement, W.AreaElement, W.BaseElement, W.BodyElement, W.FormElement, W.SelectElement, W.TableElement, W.TableRowElement, W.TableSectionElement, W.TemplateElement]);
+    _inherit(W._ChildNodeListLazy, P.ListBase);
+    _inherit(W._NodeList_Interceptor_ListMixin_ImmutableListMixin, W._NodeList_Interceptor_ListMixin);
+    _inherit(W.NodeList, W._NodeList_Interceptor_ListMixin_ImmutableListMixin);
+    _inherit(W.__NamedNodeMap_Interceptor_ListMixin_ImmutableListMixin, W.__NamedNodeMap_Interceptor_ListMixin);
+    _inherit(W._NamedNodeMap, W.__NamedNodeMap_Interceptor_ListMixin_ImmutableListMixin);
+    _inherit(W._ElementAttributeMap, W._AttributeMap);
+    _inherit(W._TemplatingNodeValidator, W._SimpleNodeValidator);
+    _inherit(P.ScriptElement, P.SvgElement);
+    _mixin(P._ListBase_Object_ListMixin, P.ListMixin);
+    _mixin(W._NodeList_Interceptor_ListMixin, P.ListMixin);
+    _mixin(W._NodeList_Interceptor_ListMixin_ImmutableListMixin, W.ImmutableListMixin);
+    _mixin(W.__NamedNodeMap_Interceptor_ListMixin, P.ListMixin);
+    _mixin(W.__NamedNodeMap_Interceptor_ListMixin_ImmutableListMixin, W.ImmutableListMixin);
   })();
   (function constants() {
+    var makeConstList = hunkHelpers.makeConstList;
+    C.BodyElement_methods = W.BodyElement.prototype;
     C.Interceptor_methods = J.Interceptor.prototype;
     C.JSArray_methods = J.JSArray.prototype;
+    C.JSInt_methods = J.JSInt.prototype;
     C.JSString_methods = J.JSString.prototype;
+    C.JavaScriptFunction_methods = J.JavaScriptFunction.prototype;
+    C.NodeList_methods = W.NodeList.prototype;
+    C.PlainJavaScriptObject_methods = J.PlainJavaScriptObject.prototype;
+    C.TableElement_methods = W.TableElement.prototype;
+    C.UnknownJavaScriptObject_methods = J.UnknownJavaScriptObject.prototype;
     C.C_JS_CONST = function getTagFallback(o) {
   var s = Object.prototype.toString.call(o);
   return s.substring(8, s.length - 1);
 };
+    C.C_JS_CONST0 = function() {
+  var toStringFunction = Object.prototype.toString;
+  function getTag(o) {
+    var s = toStringFunction.call(o);
+    return s.substring(8, s.length - 1);
+  }
+  function getUnknownTag(object, tag) {
+    if (/^HTML[A-Z].*Element$/.test(tag)) {
+      var name = toStringFunction.call(object);
+      if (name == "[object Object]") return null;
+      return "HTMLElement";
+    }
+  }
+  function getUnknownTagGenericBrowser(object, tag) {
+    if (self.HTMLElement && object instanceof HTMLElement) return "HTMLElement";
+    return getUnknownTag(object, tag);
+  }
+  function prototypeForTag(tag) {
+    if (typeof window == "undefined") return null;
+    if (typeof window[tag] == "undefined") return null;
+    var constructor = window[tag];
+    if (typeof constructor != "function") return null;
+    return constructor.prototype;
+  }
+  function discriminator(tag) { return null; }
+  var isBrowser = typeof navigator == "object";
+  return {
+    getTag: getTag,
+    getUnknownTag: isBrowser ? getUnknownTagGenericBrowser : getUnknownTag,
+    prototypeForTag: prototypeForTag,
+    discriminator: discriminator };
+};
+    C.C_JS_CONST6 = function(getTagFallback) {
+  return function(hooks) {
+    if (typeof navigator != "object") return hooks;
+    var ua = navigator.userAgent;
+    if (ua.indexOf("DumpRenderTree") >= 0) return hooks;
+    if (ua.indexOf("Chrome") >= 0) {
+      function confirm(p) {
+        return typeof window == "object" && window[p] && window[p].name == p;
+      }
+      if (confirm("Window") && confirm("HTMLElement")) return hooks;
+    }
+    hooks.getTag = getTagFallback;
+  };
+};
+    C.C_JS_CONST1 = function(hooks) {
+  if (typeof dartExperimentalFixupGetTag != "function") return hooks;
+  hooks.getTag = dartExperimentalFixupGetTag(hooks.getTag);
+};
+    C.C_JS_CONST2 = function(hooks) {
+  var getTag = hooks.getTag;
+  var prototypeForTag = hooks.prototypeForTag;
+  function getTagFixed(o) {
+    var tag = getTag(o);
+    if (tag == "Document") {
+      if (!!o.xmlVersion) return "!Document";
+      return "!HTMLDocument";
+    }
+    return tag;
+  }
+  function prototypeForTagFixed(tag) {
+    if (tag == "Document") return null;
+    return prototypeForTag(tag);
+  }
+  hooks.getTag = getTagFixed;
+  hooks.prototypeForTag = prototypeForTagFixed;
+};
+    C.C_JS_CONST5 = function(hooks) {
+  var userAgent = typeof navigator == "object" ? navigator.userAgent : "";
+  if (userAgent.indexOf("Firefox") == -1) return hooks;
+  var getTag = hooks.getTag;
+  var quickMap = {
+    "BeforeUnloadEvent": "Event",
+    "DataTransfer": "Clipboard",
+    "GeoGeolocation": "Geolocation",
+    "Location": "!Location",
+    "WorkerMessageEvent": "MessageEvent",
+    "XMLDocument": "!Document"};
+  function getTagFirefox(o) {
+    var tag = getTag(o);
+    return quickMap[tag] || tag;
+  }
+  hooks.getTag = getTagFirefox;
+};
+    C.C_JS_CONST4 = function(hooks) {
+  var userAgent = typeof navigator == "object" ? navigator.userAgent : "";
+  if (userAgent.indexOf("Trident/") == -1) return hooks;
+  var getTag = hooks.getTag;
+  var quickMap = {
+    "BeforeUnloadEvent": "Event",
+    "DataTransfer": "Clipboard",
+    "HTMLDDElement": "HTMLElement",
+    "HTMLDTElement": "HTMLElement",
+    "HTMLPhraseElement": "HTMLElement",
+    "Position": "Geoposition"
+  };
+  function getTagIE(o) {
+    var tag = getTag(o);
+    var newTag = quickMap[tag];
+    if (newTag) return newTag;
+    if (tag == "Object") {
+      if (window.DataView && (o instanceof window.DataView)) return "DataView";
+    }
+    return tag;
+  }
+  function prototypeForTagIE(tag) {
+    var constructor = window[tag];
+    if (constructor == null) return null;
+    return constructor.prototype;
+  }
+  hooks.getTag = getTagIE;
+  hooks.prototypeForTag = prototypeForTagIE;
+};
+    C.C_JS_CONST3 = function(hooks) { return hooks; }
+;
+    C.List_2Zi = H.setRuntimeTypeInfo(makeConstList(["*::class", "*::dir", "*::draggable", "*::hidden", "*::id", "*::inert", "*::itemprop", "*::itemref", "*::itemscope", "*::lang", "*::spellcheck", "*::title", "*::translate", "A::accesskey", "A::coords", "A::hreflang", "A::name", "A::shape", "A::tabindex", "A::target", "A::type", "AREA::accesskey", "AREA::alt", "AREA::coords", "AREA::nohref", "AREA::shape", "AREA::tabindex", "AREA::target", "AUDIO::controls", "AUDIO::loop", "AUDIO::mediagroup", "AUDIO::muted", "AUDIO::preload", "BDO::dir", "BODY::alink", "BODY::bgcolor", "BODY::link", "BODY::text", "BODY::vlink", "BR::clear", "BUTTON::accesskey", "BUTTON::disabled", "BUTTON::name", "BUTTON::tabindex", "BUTTON::type", "BUTTON::value", "CANVAS::height", "CANVAS::width", "CAPTION::align", "COL::align", "COL::char", "COL::charoff", "COL::span", "COL::valign", "COL::width", "COLGROUP::align", "COLGROUP::char", "COLGROUP::charoff", "COLGROUP::span", "COLGROUP::valign", "COLGROUP::width", "COMMAND::checked", "COMMAND::command", "COMMAND::disabled", "COMMAND::label", "COMMAND::radiogroup", "COMMAND::type", "DATA::value", "DEL::datetime", "DETAILS::open", "DIR::compact", "DIV::align", "DL::compact", "FIELDSET::disabled", "FONT::color", "FONT::face", "FONT::size", "FORM::accept", "FORM::autocomplete", "FORM::enctype", "FORM::method", "FORM::name", "FORM::novalidate", "FORM::target", "FRAME::name", "H1::align", "H2::align", "H3::align", "H4::align", "H5::align", "H6::align", "HR::align", "HR::noshade", "HR::size", "HR::width", "HTML::version", "IFRAME::align", "IFRAME::frameborder", "IFRAME::height", "IFRAME::marginheight", "IFRAME::marginwidth", "IFRAME::width", "IMG::align", "IMG::alt", "IMG::border", "IMG::height", "IMG::hspace", "IMG::ismap", "IMG::name", "IMG::usemap", "IMG::vspace", "IMG::width", "INPUT::accept", "INPUT::accesskey", "INPUT::align", "INPUT::alt", "INPUT::autocomplete", "INPUT::autofocus", "INPUT::checked", "INPUT::disabled", "INPUT::inputmode", "INPUT::ismap", "INPUT::list", "INPUT::max", "INPUT::maxlength", "INPUT::min", "INPUT::multiple", "INPUT::name", "INPUT::placeholder", "INPUT::readonly", "INPUT::required", "INPUT::size", "INPUT::step", "INPUT::tabindex", "INPUT::type", "INPUT::usemap", "INPUT::value", "INS::datetime", "KEYGEN::disabled", "KEYGEN::keytype", "KEYGEN::name", "LABEL::accesskey", "LABEL::for", "LEGEND::accesskey", "LEGEND::align", "LI::type", "LI::value", "LINK::sizes", "MAP::name", "MENU::compact", "MENU::label", "MENU::type", "METER::high", "METER::low", "METER::max", "METER::min", "METER::value", "OBJECT::typemustmatch", "OL::compact", "OL::reversed", "OL::start", "OL::type", "OPTGROUP::disabled", "OPTGROUP::label", "OPTION::disabled", "OPTION::label", "OPTION::selected", "OPTION::value", "OUTPUT::for", "OUTPUT::name", "P::align", "PRE::width", "PROGRESS::max", "PROGRESS::min", "PROGRESS::value", "SELECT::autocomplete", "SELECT::disabled", "SELECT::multiple", "SELECT::name", "SELECT::required", "SELECT::size", "SELECT::tabindex", "SOURCE::type", "TABLE::align", "TABLE::bgcolor", "TABLE::border", "TABLE::cellpadding", "TABLE::cellspacing", "TABLE::frame", "TABLE::rules", "TABLE::summary", "TABLE::width", "TBODY::align", "TBODY::char", "TBODY::charoff", "TBODY::valign", "TD::abbr", "TD::align", "TD::axis", "TD::bgcolor", "TD::char", "TD::charoff", "TD::colspan", "TD::headers", "TD::height", "TD::nowrap", "TD::rowspan", "TD::scope", "TD::valign", "TD::width", "TEXTAREA::accesskey", "TEXTAREA::autocomplete", "TEXTAREA::cols", "TEXTAREA::disabled", "TEXTAREA::inputmode", "TEXTAREA::name", "TEXTAREA::placeholder", "TEXTAREA::readonly", "TEXTAREA::required", "TEXTAREA::rows", "TEXTAREA::tabindex", "TEXTAREA::wrap", "TFOOT::align", "TFOOT::char", "TFOOT::charoff", "TFOOT::valign", "TH::abbr", "TH::align", "TH::axis", "TH::bgcolor", "TH::char", "TH::charoff", "TH::colspan", "TH::headers", "TH::height", "TH::nowrap", "TH::rowspan", "TH::scope", "TH::valign", "TH::width", "THEAD::align", "THEAD::char", "THEAD::charoff", "THEAD::valign", "TR::align", "TR::bgcolor", "TR::char", "TR::charoff", "TR::valign", "TRACK::default", "TRACK::kind", "TRACK::label", "TRACK::srclang", "UL::compact", "UL::type", "VIDEO::controls", "VIDEO::height", "VIDEO::loop", "VIDEO::mediagroup", "VIDEO::muted", "VIDEO::preload", "VIDEO::width"]), [P.String]);
+    C.List_ego = H.setRuntimeTypeInfo(makeConstList(["HEAD", "AREA", "BASE", "BASEFONT", "BR", "COL", "COLGROUP", "EMBED", "FRAME", "FRAMESET", "HR", "IMAGE", "IMG", "INPUT", "ISINDEX", "LINK", "META", "PARAM", "SOURCE", "STYLE", "TITLE", "WBR"]), [P.String]);
+    C.List_empty = H.setRuntimeTypeInfo(makeConstList([]), [P.String]);
+    C.List_wSV = H.setRuntimeTypeInfo(makeConstList(["bind", "if", "ref", "repeat", "syntax"]), [P.String]);
+    C.List_yrN = H.setRuntimeTypeInfo(makeConstList(["A::href", "AREA::href", "BLOCKQUOTE::cite", "BODY::background", "COMMAND::icon", "DEL::cite", "FORM::action", "IMG::src", "INPUT::src", "INS::cite", "Q::cite", "VIDEO::poster"]), [P.String]);
   })();
   (function staticFields() {
+    $.Closure_functionCounter = 0;
+    $.BoundClosure_selfFieldNameCache = null;
+    $.BoundClosure_receiverFieldNameCache = null;
+    $._inTypeAssertion = false;
+    $.getTagFunction = null;
+    $.alternateTagFunction = null;
+    $.prototypeForTagFunction = null;
+    $.dispatchRecordsForInstanceTags = null;
+    $.interceptorsForUncacheableTags = null;
+    $.initNativeDispatchFlag = null;
+    $.Element__parseDocument = null;
+    $.Element__parseRange = null;
+    $.Element__defaultValidator = null;
+    $.Element__defaultSanitizer = null;
     $.preamble = "We the People of the United States, in Order to form a more perfect Union, establish Justice, insure domestic Tranquility, provide for the common defence, promote the general Welfare, and secure the Blessings of Liberty to ourselves and our Posterity, do ordain and establish this Constitution for the United States of America.";
   })();
   (function lazyInitializers() {
     var _lazy = hunkHelpers.lazy;
+    _lazy($, "DART_CLOSURE_PROPERTY_NAME", "$get$DART_CLOSURE_PROPERTY_NAME", function() {
+      return H.getIsolateAffinityTag("_$dart_dartClosure");
+    });
+    _lazy($, "JS_INTEROP_INTERCEPTOR_TAG", "$get$JS_INTEROP_INTERCEPTOR_TAG", function() {
+      return H.getIsolateAffinityTag("_$dart_js");
+    });
+    _lazy($, "TypeErrorDecoder_noSuchMethodPattern", "$get$TypeErrorDecoder_noSuchMethodPattern", function() {
+      return H.TypeErrorDecoder_extractPattern(H.TypeErrorDecoder_provokeCallErrorOn({
+        toString: function() {
+          return "$receiver$";
+        }
+      }));
+    });
+    _lazy($, "TypeErrorDecoder_notClosurePattern", "$get$TypeErrorDecoder_notClosurePattern", function() {
+      return H.TypeErrorDecoder_extractPattern(H.TypeErrorDecoder_provokeCallErrorOn({$method$: null,
+        toString: function() {
+          return "$receiver$";
+        }
+      }));
+    });
+    _lazy($, "TypeErrorDecoder_nullCallPattern", "$get$TypeErrorDecoder_nullCallPattern", function() {
+      return H.TypeErrorDecoder_extractPattern(H.TypeErrorDecoder_provokeCallErrorOn(null));
+    });
+    _lazy($, "TypeErrorDecoder_nullLiteralCallPattern", "$get$TypeErrorDecoder_nullLiteralCallPattern", function() {
+      return H.TypeErrorDecoder_extractPattern(function() {
+        var $argumentsExpr$ = '$arguments$';
+        try {
+          null.$method$($argumentsExpr$);
+        } catch (e) {
+          return e.message;
+        }
+      }());
+    });
+    _lazy($, "TypeErrorDecoder_undefinedCallPattern", "$get$TypeErrorDecoder_undefinedCallPattern", function() {
+      return H.TypeErrorDecoder_extractPattern(H.TypeErrorDecoder_provokeCallErrorOn(void 0));
+    });
+    _lazy($, "TypeErrorDecoder_undefinedLiteralCallPattern", "$get$TypeErrorDecoder_undefinedLiteralCallPattern", function() {
+      return H.TypeErrorDecoder_extractPattern(function() {
+        var $argumentsExpr$ = '$arguments$';
+        try {
+          (void 0).$method$($argumentsExpr$);
+        } catch (e) {
+          return e.message;
+        }
+      }());
+    });
+    _lazy($, "TypeErrorDecoder_nullPropertyPattern", "$get$TypeErrorDecoder_nullPropertyPattern", function() {
+      return H.TypeErrorDecoder_extractPattern(H.TypeErrorDecoder_provokePropertyErrorOn(null));
+    });
+    _lazy($, "TypeErrorDecoder_nullLiteralPropertyPattern", "$get$TypeErrorDecoder_nullLiteralPropertyPattern", function() {
+      return H.TypeErrorDecoder_extractPattern(function() {
+        try {
+          null.$method$;
+        } catch (e) {
+          return e.message;
+        }
+      }());
+    });
+    _lazy($, "TypeErrorDecoder_undefinedPropertyPattern", "$get$TypeErrorDecoder_undefinedPropertyPattern", function() {
+      return H.TypeErrorDecoder_extractPattern(H.TypeErrorDecoder_provokePropertyErrorOn(void 0));
+    });
+    _lazy($, "TypeErrorDecoder_undefinedLiteralPropertyPattern", "$get$TypeErrorDecoder_undefinedLiteralPropertyPattern", function() {
+      return H.TypeErrorDecoder_extractPattern(function() {
+        try {
+          (void 0).$method$;
+        } catch (e) {
+          return e.message;
+        }
+      }());
+    });
     _lazy($, "_toStringVisiting", "$get$_toStringVisiting", function() {
       return [];
     });
+    _lazy($, "_Html5NodeValidator__allowedElements", "$get$_Html5NodeValidator__allowedElements", function() {
+      return P.LinkedHashSet_LinkedHashSet$from(["A", "ABBR", "ACRONYM", "ADDRESS", "AREA", "ARTICLE", "ASIDE", "AUDIO", "B", "BDI", "BDO", "BIG", "BLOCKQUOTE", "BR", "BUTTON", "CANVAS", "CAPTION", "CENTER", "CITE", "CODE", "COL", "COLGROUP", "COMMAND", "DATA", "DATALIST", "DD", "DEL", "DETAILS", "DFN", "DIR", "DIV", "DL", "DT", "EM", "FIELDSET", "FIGCAPTION", "FIGURE", "FONT", "FOOTER", "FORM", "H1", "H2", "H3", "H4", "H5", "H6", "HEADER", "HGROUP", "HR", "I", "IFRAME", "IMG", "INPUT", "INS", "KBD", "LABEL", "LEGEND", "LI", "MAP", "MARK", "MENU", "METER", "NAV", "NOBR", "OL", "OPTGROUP", "OPTION", "OUTPUT", "P", "PRE", "PROGRESS", "Q", "S", "SAMP", "SECTION", "SELECT", "SMALL", "SOURCE", "SPAN", "STRIKE", "STRONG", "SUB", "SUMMARY", "SUP", "TABLE", "TBODY", "TD", "TEXTAREA", "TFOOT", "TH", "THEAD", "TIME", "TR", "TRACK", "TT", "U", "UL", "VAR", "VIDEO", "WBR"], P.String);
+    });
+    _lazy($, "_Html5NodeValidator__attributeValidators", "$get$_Html5NodeValidator__attributeValidators", function() {
+      return P.LinkedHashMap_LinkedHashMap$_empty(P.String, P.Function);
+    });
   })();
-  var init = {mangledGlobalNames: {int: "int", double: "double", num: "num", String: "String", bool: "bool", Null: "Null", List: "List"}, mangledNames: {}, getTypeFromName: getGlobalFromName, metadata: [], types: []};
+  var init = {mangledGlobalNames: {int: "int", double: "double", num: "num", String: "String", bool: "bool", Null: "Null", List: "List"}, mangledNames: {}, getTypeFromName: getGlobalFromName, metadata: [], types: [{func: 1, args: [,]}, {func: 1, ret: P.bool, args: [W.NodeValidator]}, {func: 1, ret: P.bool, args: [P.String]}, {func: 1, ret: P.bool, args: [W.Element, P.String, P.String, W._Html5NodeValidator]}, {func: 1, args: [, P.String]}, {func: 1, args: [P.String]}, {func: 1, ret: P.Null, args: [,,]}, {func: 1, ret: P.bool, args: [W.Node]}, {func: 1, ret: P.String, args: [P.String]}, {func: 1, ret: -1, args: [W.Node, W.Node]}], interceptorsByTag: null, leafTags: null};
+  (function nativeSupport() {
+    !function() {
+      var intern = function(s) {
+        var o = {};
+        o[s] = 1;
+        return Object.keys(hunkHelpers.convertToFastObject(o))[0];
+      };
+      init.getIsolateTag = function(name) {
+        return intern("___dart_" + name + init.isolateTag);
+      };
+      var tableProperty = "___dart_isolate_tags_";
+      var usedProperties = Object[tableProperty] || (Object[tableProperty] = Object.create(null));
+      var rootProperty = "_ZxYxX";
+      for (var i = 0;; i++) {
+        var property = intern(rootProperty + "_" + i + "_");
+        if (!(property in usedProperties)) {
+          usedProperties[property] = 1;
+          init.isolateTag = property;
+          break;
+        }
+      }
+      init.dispatchPropertyName = init.getIsolateTag("dispatch_record");
+    }();
+    hunkHelpers.setOrUpdateInterceptorsByTag({ApplicationCacheErrorEvent: J.Interceptor, DOMError: J.Interceptor, DOMImplementation: J.Interceptor, ErrorEvent: J.Interceptor, Event: J.Interceptor, InputEvent: J.Interceptor, MediaError: J.Interceptor, NavigatorUserMediaError: J.Interceptor, OverconstrainedError: J.Interceptor, PositionError: J.Interceptor, Range: J.Interceptor, SensorErrorEvent: J.Interceptor, SpeechRecognitionError: J.Interceptor, SQLError: J.Interceptor, HTMLAudioElement: W.HtmlElement, HTMLBRElement: W.HtmlElement, HTMLButtonElement: W.HtmlElement, HTMLCanvasElement: W.HtmlElement, HTMLContentElement: W.HtmlElement, HTMLDListElement: W.HtmlElement, HTMLDataElement: W.HtmlElement, HTMLDataListElement: W.HtmlElement, HTMLDetailsElement: W.HtmlElement, HTMLDialogElement: W.HtmlElement, HTMLDivElement: W.HtmlElement, HTMLEmbedElement: W.HtmlElement, HTMLFieldSetElement: W.HtmlElement, HTMLHRElement: W.HtmlElement, HTMLHeadElement: W.HtmlElement, HTMLHeadingElement: W.HtmlElement, HTMLHtmlElement: W.HtmlElement, HTMLIFrameElement: W.HtmlElement, HTMLImageElement: W.HtmlElement, HTMLInputElement: W.HtmlElement, HTMLLIElement: W.HtmlElement, HTMLLabelElement: W.HtmlElement, HTMLLegendElement: W.HtmlElement, HTMLLinkElement: W.HtmlElement, HTMLMapElement: W.HtmlElement, HTMLMediaElement: W.HtmlElement, HTMLMenuElement: W.HtmlElement, HTMLMetaElement: W.HtmlElement, HTMLMeterElement: W.HtmlElement, HTMLModElement: W.HtmlElement, HTMLOListElement: W.HtmlElement, HTMLObjectElement: W.HtmlElement, HTMLOptGroupElement: W.HtmlElement, HTMLOptionElement: W.HtmlElement, HTMLOutputElement: W.HtmlElement, HTMLParagraphElement: W.HtmlElement, HTMLParamElement: W.HtmlElement, HTMLPictureElement: W.HtmlElement, HTMLPreElement: W.HtmlElement, HTMLProgressElement: W.HtmlElement, HTMLQuoteElement: W.HtmlElement, HTMLScriptElement: W.HtmlElement, HTMLShadowElement: W.HtmlElement, HTMLSlotElement: W.HtmlElement, HTMLSourceElement: W.HtmlElement, HTMLSpanElement: W.HtmlElement, HTMLStyleElement: W.HtmlElement, HTMLTableCaptionElement: W.HtmlElement, HTMLTableCellElement: W.HtmlElement, HTMLTableDataCellElement: W.HtmlElement, HTMLTableHeaderCellElement: W.HtmlElement, HTMLTableColElement: W.HtmlElement, HTMLTextAreaElement: W.HtmlElement, HTMLTimeElement: W.HtmlElement, HTMLTitleElement: W.HtmlElement, HTMLTrackElement: W.HtmlElement, HTMLUListElement: W.HtmlElement, HTMLUnknownElement: W.HtmlElement, HTMLVideoElement: W.HtmlElement, HTMLDirectoryElement: W.HtmlElement, HTMLFontElement: W.HtmlElement, HTMLFrameElement: W.HtmlElement, HTMLFrameSetElement: W.HtmlElement, HTMLMarqueeElement: W.HtmlElement, HTMLElement: W.HtmlElement, HTMLAnchorElement: W.AnchorElement, HTMLAreaElement: W.AreaElement, HTMLBaseElement: W.BaseElement, HTMLBodyElement: W.BodyElement, CDATASection: W.CharacterData, CharacterData: W.CharacterData, Comment: W.CharacterData, ProcessingInstruction: W.CharacterData, Text: W.CharacterData, DOMException: W.DomException, Element: W.Element, Window: W.EventTarget, DOMWindow: W.EventTarget, EventTarget: W.EventTarget, HTMLFormElement: W.FormElement, Location: W.Location, Document: W.Node, DocumentFragment: W.Node, HTMLDocument: W.Node, ShadowRoot: W.Node, XMLDocument: W.Node, DocumentType: W.Node, Node: W.Node, NodeList: W.NodeList, RadioNodeList: W.NodeList, HTMLSelectElement: W.SelectElement, HTMLTableElement: W.TableElement, HTMLTableRowElement: W.TableRowElement, HTMLTableSectionElement: W.TableSectionElement, HTMLTemplateElement: W.TemplateElement, Attr: W._Attr, NamedNodeMap: W._NamedNodeMap, MozNamedAttrMap: W._NamedNodeMap, SVGScriptElement: P.ScriptElement, SVGAElement: P.SvgElement, SVGAnimateElement: P.SvgElement, SVGAnimateMotionElement: P.SvgElement, SVGAnimateTransformElement: P.SvgElement, SVGAnimationElement: P.SvgElement, SVGCircleElement: P.SvgElement, SVGClipPathElement: P.SvgElement, SVGDefsElement: P.SvgElement, SVGDescElement: P.SvgElement, SVGDiscardElement: P.SvgElement, SVGEllipseElement: P.SvgElement, SVGFEBlendElement: P.SvgElement, SVGFEColorMatrixElement: P.SvgElement, SVGFEComponentTransferElement: P.SvgElement, SVGFECompositeElement: P.SvgElement, SVGFEConvolveMatrixElement: P.SvgElement, SVGFEDiffuseLightingElement: P.SvgElement, SVGFEDisplacementMapElement: P.SvgElement, SVGFEDistantLightElement: P.SvgElement, SVGFEFloodElement: P.SvgElement, SVGFEFuncAElement: P.SvgElement, SVGFEFuncBElement: P.SvgElement, SVGFEFuncGElement: P.SvgElement, SVGFEFuncRElement: P.SvgElement, SVGFEGaussianBlurElement: P.SvgElement, SVGFEImageElement: P.SvgElement, SVGFEMergeElement: P.SvgElement, SVGFEMergeNodeElement: P.SvgElement, SVGFEMorphologyElement: P.SvgElement, SVGFEOffsetElement: P.SvgElement, SVGFEPointLightElement: P.SvgElement, SVGFESpecularLightingElement: P.SvgElement, SVGFESpotLightElement: P.SvgElement, SVGFETileElement: P.SvgElement, SVGFETurbulenceElement: P.SvgElement, SVGFilterElement: P.SvgElement, SVGForeignObjectElement: P.SvgElement, SVGGElement: P.SvgElement, SVGGeometryElement: P.SvgElement, SVGGraphicsElement: P.SvgElement, SVGImageElement: P.SvgElement, SVGLineElement: P.SvgElement, SVGLinearGradientElement: P.SvgElement, SVGMarkerElement: P.SvgElement, SVGMaskElement: P.SvgElement, SVGMetadataElement: P.SvgElement, SVGPathElement: P.SvgElement, SVGPatternElement: P.SvgElement, SVGPolygonElement: P.SvgElement, SVGPolylineElement: P.SvgElement, SVGRadialGradientElement: P.SvgElement, SVGRectElement: P.SvgElement, SVGSetElement: P.SvgElement, SVGStopElement: P.SvgElement, SVGStyleElement: P.SvgElement, SVGSVGElement: P.SvgElement, SVGSwitchElement: P.SvgElement, SVGSymbolElement: P.SvgElement, SVGTSpanElement: P.SvgElement, SVGTextContentElement: P.SvgElement, SVGTextElement: P.SvgElement, SVGTextPathElement: P.SvgElement, SVGTextPositioningElement: P.SvgElement, SVGTitleElement: P.SvgElement, SVGUseElement: P.SvgElement, SVGViewElement: P.SvgElement, SVGGradientElement: P.SvgElement, SVGComponentTransferFunctionElement: P.SvgElement, SVGFEDropShadowElement: P.SvgElement, SVGMPathElement: P.SvgElement, SVGElement: P.SvgElement});
+    hunkHelpers.setOrUpdateLeafTags({ApplicationCacheErrorEvent: true, DOMError: true, DOMImplementation: true, ErrorEvent: true, Event: true, InputEvent: true, MediaError: true, NavigatorUserMediaError: true, OverconstrainedError: true, PositionError: true, Range: true, SensorErrorEvent: true, SpeechRecognitionError: true, SQLError: true, HTMLAudioElement: true, HTMLBRElement: true, HTMLButtonElement: true, HTMLCanvasElement: true, HTMLContentElement: true, HTMLDListElement: true, HTMLDataElement: true, HTMLDataListElement: true, HTMLDetailsElement: true, HTMLDialogElement: true, HTMLDivElement: true, HTMLEmbedElement: true, HTMLFieldSetElement: true, HTMLHRElement: true, HTMLHeadElement: true, HTMLHeadingElement: true, HTMLHtmlElement: true, HTMLIFrameElement: true, HTMLImageElement: true, HTMLInputElement: true, HTMLLIElement: true, HTMLLabelElement: true, HTMLLegendElement: true, HTMLLinkElement: true, HTMLMapElement: true, HTMLMediaElement: true, HTMLMenuElement: true, HTMLMetaElement: true, HTMLMeterElement: true, HTMLModElement: true, HTMLOListElement: true, HTMLObjectElement: true, HTMLOptGroupElement: true, HTMLOptionElement: true, HTMLOutputElement: true, HTMLParagraphElement: true, HTMLParamElement: true, HTMLPictureElement: true, HTMLPreElement: true, HTMLProgressElement: true, HTMLQuoteElement: true, HTMLScriptElement: true, HTMLShadowElement: true, HTMLSlotElement: true, HTMLSourceElement: true, HTMLSpanElement: true, HTMLStyleElement: true, HTMLTableCaptionElement: true, HTMLTableCellElement: true, HTMLTableDataCellElement: true, HTMLTableHeaderCellElement: true, HTMLTableColElement: true, HTMLTextAreaElement: true, HTMLTimeElement: true, HTMLTitleElement: true, HTMLTrackElement: true, HTMLUListElement: true, HTMLUnknownElement: true, HTMLVideoElement: true, HTMLDirectoryElement: true, HTMLFontElement: true, HTMLFrameElement: true, HTMLFrameSetElement: true, HTMLMarqueeElement: true, HTMLElement: false, HTMLAnchorElement: true, HTMLAreaElement: true, HTMLBaseElement: true, HTMLBodyElement: true, CDATASection: true, CharacterData: true, Comment: true, ProcessingInstruction: true, Text: true, DOMException: true, Element: false, Window: true, DOMWindow: true, EventTarget: false, HTMLFormElement: true, Location: true, Document: true, DocumentFragment: true, HTMLDocument: true, ShadowRoot: true, XMLDocument: true, DocumentType: true, Node: false, NodeList: true, RadioNodeList: true, HTMLSelectElement: true, HTMLTableElement: true, HTMLTableRowElement: true, HTMLTableSectionElement: true, HTMLTemplateElement: true, Attr: true, NamedNodeMap: true, MozNamedAttrMap: true, SVGScriptElement: true, SVGAElement: true, SVGAnimateElement: true, SVGAnimateMotionElement: true, SVGAnimateTransformElement: true, SVGAnimationElement: true, SVGCircleElement: true, SVGClipPathElement: true, SVGDefsElement: true, SVGDescElement: true, SVGDiscardElement: true, SVGEllipseElement: true, SVGFEBlendElement: true, SVGFEColorMatrixElement: true, SVGFEComponentTransferElement: true, SVGFECompositeElement: true, SVGFEConvolveMatrixElement: true, SVGFEDiffuseLightingElement: true, SVGFEDisplacementMapElement: true, SVGFEDistantLightElement: true, SVGFEFloodElement: true, SVGFEFuncAElement: true, SVGFEFuncBElement: true, SVGFEFuncGElement: true, SVGFEFuncRElement: true, SVGFEGaussianBlurElement: true, SVGFEImageElement: true, SVGFEMergeElement: true, SVGFEMergeNodeElement: true, SVGFEMorphologyElement: true, SVGFEOffsetElement: true, SVGFEPointLightElement: true, SVGFESpecularLightingElement: true, SVGFESpotLightElement: true, SVGFETileElement: true, SVGFETurbulenceElement: true, SVGFilterElement: true, SVGForeignObjectElement: true, SVGGElement: true, SVGGeometryElement: true, SVGGraphicsElement: true, SVGImageElement: true, SVGLineElement: true, SVGLinearGradientElement: true, SVGMarkerElement: true, SVGMaskElement: true, SVGMetadataElement: true, SVGPathElement: true, SVGPatternElement: true, SVGPolygonElement: true, SVGPolylineElement: true, SVGRadialGradientElement: true, SVGRectElement: true, SVGSetElement: true, SVGStopElement: true, SVGStyleElement: true, SVGSVGElement: true, SVGSwitchElement: true, SVGSymbolElement: true, SVGTSpanElement: true, SVGTextContentElement: true, SVGTextElement: true, SVGTextPathElement: true, SVGTextPositioningElement: true, SVGTitleElement: true, SVGUseElement: true, SVGViewElement: true, SVGGradientElement: true, SVGComponentTransferFunctionElement: true, SVGFEDropShadowElement: true, SVGMPathElement: true, SVGElement: false});
+  })();
   convertAllToFastObject(holders);
   convertToFastObject($);
   (function(callback) {

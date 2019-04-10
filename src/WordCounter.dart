@@ -9,7 +9,7 @@ class WordCounter {
     return wordsCounter;
   }
 
-  int countEndLetterWords(textArray, letter) {
+  static int countEndLetterWords(textArray, letter) {
     int wordsCounter = 0;
     for (var i = 0; i < textArray.length; i++) {
       if (textArray[i].endsWith(letter)) {
@@ -19,7 +19,7 @@ class WordCounter {
     return wordsCounter;
   }
 
-  int countStartAndEndLetterWords(textArray, startLetter, endLetter) {
+  static int countStartAndEndLetterWords(textArray, startLetter, endLetter) {
     int wordsCounter = 0;
     for (var i = 0; i < textArray.length; i++) {
       if (textArray[i].startsWith(startLetter) && textArray[i].endsWith(endLetter)) {

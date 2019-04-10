@@ -1,9 +1,11 @@
-class DisplayToDom {
-  void displayResult() {
+import 'dart:html';
 
+class DisplayToDom {
+  static void displayResult(result) {
+    querySelector('.result').innerHtml = result;
   }
 
-  void displayText() {
-
+  static void displayText(documentText) {
+    querySelector('.text-body').innerHtml = documentText;
   }
 }
